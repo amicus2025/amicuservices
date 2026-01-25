@@ -55,8 +55,9 @@
 </head>
 <body>
   <div class="container">
-    <h1>AmicusNotary - Online Notary</h1>
-    <p class="note">Book your California state-approved online notarization session below. Payment unlocks the booking widget.</p>
+    <h1>Schedule Your Notary Online Today!</h1>
+    <p class="note">In Person Electronic Notarizations (IPEN) only available "in person" in CA using California State -approved technology, You will need valid ID and internet camera access.</p>
+    <p class="note">All Notarizations will be "in-person" with ✓ electronic signatures, ✓ electronic seal and ✓ digital certificates.</p>
 
     <!-- PayPal button -->
     <form id="paypalForm" action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank">
@@ -66,13 +67,13 @@
       <input type="hidden" name="amount" value="50.00">
       <input type="hidden" name="currency_code" value="USD">
       <input type="hidden" name="return" value="https://YOURDOMAIN.com/afterpayment.html">
-      <input type="submit" value="Pay & Schedule Notary ($50)" class="btn">
+      <input type="submit" value="Schedule Notary" class="btn">
     </form>
 
     <!-- RON provider iframe -->
     <iframe id="ronIframe" src="https://www.notarize.com/book?apiKey=YOUR_KEY" title="RON Booking Widget"></iframe>
 
-    <p class="note">All notarizations are performed using California state-approved RON technology. You will need valid ID and internet camera access.</p>
+    <p class="note"><strong>CA Remote Online Notarizations (Available in 2030)</strong></p>
   </div>
 
   <script>
