@@ -88,7 +88,7 @@ npm start
 
 ## 🌐 Live Demo
 
-Visit the live site at: [Your GitHub Pages URL]
+Visit the live site at: [https://amicus2025.github.io/amicuservices/](https://amicus2025.github.io/amicuservices/)
 
 ## 📱 Pages
 
