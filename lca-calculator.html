@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Hotel LCA Calculator - Carbon Footprint</title>
+
+  <!-- Styles: polished & responsive -->
+  <style>
+    :root{
+      --accent: #0ea5a4;
+      --accent-600: #06b6d4;
+      --muted:#64748b;
+      --card:#ffffff;
+      --bg:#f6f9fb;
+      --glass: rgba(255,255,255,0.7);
+      --radius: 12px;
+      --shadow: 0 8px 24px rgba(12,18,31,0.06);
+      --max-width:1100px;
+      --text:#0f172a;
+    }
+    *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;}
+    .wrap{max-width:var(--max-width);margin:28px auto;padding:18px}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    .logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent-600),var(--accent));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:20px}
+    .brand{font-weight:700;font-size:20px;color:var(--accent)}
+    .muted{color:var(--muted);font-size:13px}
+    .card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:18px}
+    .grid{display:grid;gap:14px}
+    .cols-2{grid-template-columns:repeat(2, 1fr)}
+    .cols-3{grid-template-columns:repeat(3, 1fr)}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    input[type="number"], select, input[type="text"]{
+      width:100%;padding:10px;border:1px solid #e6edf3;border-radius:10px;font-size:14px;background:#fff;
+    }
+    .row{display:flex;gap:8px}
+    .btn{background:var(--accent);color:white;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
+    .btn.ghost{background:#f1f5f9;color:var(--text);border:1px solid #e6edf3}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .results {display:flex;gap:12px;flex-direction:column}
+    .result-line{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed #f1f5f9}
+    .big{font-size:20px;font-weight:700;color:var(--text)}
+    .small{font-size:13px;color:var(--muted)}
+    pre{background:#fbfdfe;padding:10px;border-radius:8px;overflow:auto}
+    footer{margin-top:18px;font-size:13px;color:var(--muted);text-align:center}
+
+    /* responsive layout */
+    .two-col{display:grid;grid-template-columns:1fr 420px;gap:18px}
+    @media (max-width:1100px){ .two-col{grid-template-columns:1fr 380px} }
+    @media (max-width:900px){ .two-col{grid-template-columns:1fr} .cols-2{grid-template-columns:1fr} .cols-3{grid-template-columns:1fr} }
+    @media (max-width:520px){
+      .logo{width:48px;height:48px;font-size:16px}
+      .brand{font-size:18px}
+      input[type="number"], select, input[type="text"]{padding:9px}
+      .card{padding:14px}
+    }
+
+    /* small helper */
+    .muted-2{color:#475569;font-size:13px}
+    .badge {display:inline-block;padding:6px 10px;border-radius:999px;background:#eef2f2;color:#0f766e;font-weight:600;font-size:13px}
+  </style>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- html2pdf (uses html2canvas + jsPDF) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">LCA</div>
+      <div>
+        <div class="brand">Hotel LCA Calculator - Carbon Footprint</div>
+        <div class="muted">Estimate CO₂e for small hotels. Export PDF reports with insights.</div>
+      </div>
+    </header>
+
+    <div class="two-col">
+      <!-- LEFT: Inputs -->
+      <div>
+        <section class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-weight:700">Hotel Inputs</div>
+            <div class="small">Provide annual values where possible</div>
+          </div>
+
+          <div class="grid cols-2" style="margin-bottom:12px">
+            <div>
+              <label>Hotel name</label>
+              <input id="hotel_name" type="text" placeholder="e.g., Seaview Resort"/>
+            </div>
+
+            <div>
+              <label>Address</label>
+              <input id="address" type="text" placeholder="Street, City, Country" />
+            </div>
+
+            <div>
+              <label>Hotel Type</label>
+              <select id="hoteltype">
+                <option value="airbnb">AirBnB</option>
+                <option value="boutique">Boutique</option>
+                <option value="business">Business Hotel</option>
+                <option value="chain">Chain Hotel</option>
+                <option value="ecolodge">EcoLodge</option>
+                <option value="historic">Historic Hotel</option>
+                <option value="hostel">Hostel</option>
+                <option value="inn">Inn / B&B</option>
+                <option value="luxury">Luxury Hotel</option>
+                <option value="resort">Resort</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid cols-2" style="margin-bottom:12px">
+            <div>
+              <label>Region (affects emission factors)</label>
+              <select id="region">
+                <option value="au">Australia</option>
+                <option value="eu">European Union</option>
+                <option value="east_asia">East Asia</option>
+                <option value="global">Global (default)</option>
+                <option value="middle_east">Middle East</option>
+                <option value="uk">United Kingdom</option>
+                <option value="us">United States</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Number of Rooms</label>
+              <input id="rooms" type="number" min="1" value="100"/>
+            </div>
+          </div>
+
+          <div class="grid cols-2" style="margin-bottom:12px">
+            <div>
+              <label>Avg size of room (m²) — including share of corridors</label>
+              <input id="roomsize" type="number" min="1" value="35"/>
+            </div>
+            <div>
+              <label>Annual occupied room-nights</label>
+              <input id="room_nights" type="number" min="1" value="32000"/>
+            </div>
+          </div>
+
+          <div class="grid cols-2" style="margin-bottom:12px">
+            <div>
+              <label>Annual electricity (kWh)</label>
+              <input id="electricity_kwh" type="number" min="0" value="700000"/>
+            </div>
+            <div>
+              <label>% electricity from on-site solar</label>
+              <input id="solar_pct" type="number" min="0" max="100" value="5"/>
+            </div>
+          </div>
+
+          <div class="grid cols-2" style="margin-bottom:12px">
+            <div>
+              <label>Annual natural gas (therms)</label>
+              <input id="gas_therms" type="number" min="0" value="30000"/>
+            </div>
+            <div>
+              <label>Diesel / heating oil (liters/year)</label>
+              <input id="diesel_l" type="number" min="0" value="0"/>
+            </div>
+          </div>
+
+          <div class="grid cols-2" style="margin-bottom:12px">
+            <div>
+              <label>Annual water (m³)</label>
+              <input id="water_m3" type="number" min="0" value="20000"/>
+            </div>
+            <div>
+              <label>Annual waste (kg)</label>
+              <input id="waste_kg" type="number" min="0" value="45000"/>
+            </div>
+          </div>
+
+          <div class="grid cols-2" style="margin-bottom:6px">
+            <div>
+              <label>Recycle / compost %</label>
+              <input id="recycle_pct" type="number" min="0" max="100" value="30"/>
+            </div>
+            <div>
+              <label>Annual shuttle km (hotel vehicles)</label>
+              <input id="shuttle_km" type="number" min="0" value="15000"/>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:10px;align-items:center">
+            <button id="calcBtn" class="btn">Calculate Emissions</button>
+            <button id="resetBtn" class="btn ghost">Reset</button>
+            <div style="margin-left:auto" class="muted">Emissions factors editable in script</div>
+          </div>
+        </section>
+
+        <!-- small help / notes -->
+        <section class="card">
+          <div style="padding:12px;background:#eef2f2;border-radius:8px;border-left:4px solid var(--accent)">
+            <div style="font-weight:700;margin-bottom:8px;color:#0f766e">Notes & Guidance</div>
+            <div class="small" style="color:#0f766e">
+              • This tool provides an <strong>estimate</strong> for informational use. For a formal LCA, consult an accredited practitioner.<br/>
+              • Solar is assumed to displace grid electricity one-to-one. Scope 3 (guest travel, purchased goods) not included by default.<br/>
+              • The emissions factor constants are based on local guidance specific to each country/region.
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- RIGHT: Results and chart -->
+      <aside>
+        <section id="resultsCard" class="card" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-weight:700" id="hotelTitle">Results</div>
+              <div class="small">Snapshot — downloadable PDF, CSV, badge</div>
+            </div>
+            <div class="actions">
+              <button id="downloadPdf" class="btn" title="Download PDF">PDF</button>
+              <button id="downloadCsv" class="btn" style="background:#2563eb" title="Download CSV">CSV</button>
+              <button id="badgeBtn" class="btn" style="background:#10b981" title="Copy badge HTML">Badge</button>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+            <div style="flex:1;min-width:200px">
+              <div class="card" style="padding:12px">
+                <div style="font-weight:700;margin-bottom:8px">Summary</div>
+                <div class="result-line"><div class="small">Total annual CO₂e (kg)</div><div class="big" id="totalCO2">—</div></div>
+                <div class="result-line"><div class="small">CO₂e per room-night (kg)</div><div class="big" id="perRoomNight">—</div></div>
+                <div class="result-line"><div class="small">Scope 1 (direct kg CO₂e)</div><div class="big" id="scope1">—</div></div>
+                <div class="result-line"><div class="small">Scope 2 (electricity kg CO₂e)</div><div class="big" id="scope2">—</div></div>
+                <div class="result-line"><div class="small">Scope 3 (waste+water kg CO₂e)</div><div class="big" id="scope3">—</div></div>
+                <div style="margin-top:8px" id="insightText" class="small muted-2"></div>
+              </div>
+            </div>
+
+            <div style="flex:1;min-width:260px">
+              <div style="background:#fff;padding:12px;border-radius:10px;box-shadow:0 4px 12px rgba(2,6,23,0.04)">
+                <canvas id="emChart" height="240"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px">
+            <div style="font-weight:700;margin-bottom:6px">Detailed breakdown & notes</div>
+            <div class="card" id="detailCard" style="padding:12px">
+              <pre id="detailPre" style="white-space:pre-wrap;margin:0;font-size:13px;color:var(--text)"></pre>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+    <footer class="muted" style="margin-top:18px">
+      Built with ❤️ — edit emissions factors in the script for your region. Use the badge fairly.
+    </footer>
+  </div>
+
+  <!-- Calculation engine -->
+  <script>
+  (function(){
+    // --- Emissions factors (defaults).
+    // Values aligned to official government and international standards for each region.
+    // Units: kg CO2e per unit (kWh, therm, liter, m3, kg, km)
+    // NOTE: These are default factors based on published standards — replace with latest local factors where available.
+    // Sources: DEFRA (UK), EPA (US), IEA (EU/International), Australia NGERS, national inventories.
+    const EMISSION_FACTORS = {
+      electricity: { // kg CO2e per kWh (region-specific standards)
+        // Global average (IEA reference mix)
+        global: 0.475,
+        // United States (EPA eGRID 2022 - average US grid factor)
+        us: 0.417,
+        // United Kingdom (DEFRA 2022 GHG Conversion Factors for grid electricity)
+        uk: 0.212,
+        // European Union (Eurostat/IRENA - average EU grid mix)
+        eu: 0.295,
+        // Australia (National Greenhouse and Energy Reporting - NGERS standard)
+        au: 0.816,
+        // East Asia (IEA data - regional average including China, Japan, Korea)
+        east_asia: 0.56,
+        // Middle East (IEA reference - oil/gas dominated grids)
+        middle_east: 0.60
+      },
+      // Natural gas: kg CO2e per therm (1 therm ≈ 29.3 kWh). Based on DEFRA / EPA combustion factors
+      natural_gas_therm: 5.38,
+      // Diesel (litre) CO2e (IPCC/EPA combustion factor standard)
+      diesel_l: 2.68,
+      // Water (m3) treatment and delivery (approximate, based on average wastewater treatment emissions)
+      water_m3: 0.344,
+      // Residual waste (kg) to landfill/incineration (IPCC default, varies by country waste management practices)
+      waste_kg: 0.5,
+      // Passenger-km emission factor for small hotel shuttle (EPA/DOE transportation factor)
+      shuttle_km: 0.192
+    };
+
+    // helpers
+    function $id(id){ return document.getElementById(id) }
+    function num(id){ const v = parseFloat($id(id)?.value); return Number.isFinite(v) ? v : 0 }
+    function round(v){ return Math.round(v*100)/100 }
+    function clamp(v,min,max){ return Math.min(max,Math.max(min,v)) }
+    function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;') }
+
+    // chart
+    let emChart = null;
+    function renderChart(values, labels){
+      const ctx = $id('emChart').getContext('2d');
+      if(emChart) emChart.destroy();
+      emChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels,
+          datasets: [{
+            data: values,
+            backgroundColor: ['#f97316','#06b6d4','#34d399']
+          }]
+        },
+        options: {
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+
+    // main calculation
+    function calculate(){
+      const hotel_name = ($id('hotel_name').value || 'Unnamed Hotel').trim();
+      const address = ($id('address')?.value || '').trim();
+      const region = $id('region').value || 'global';
+      const rooms = Math.max(1, Math.round(num('rooms')));
+      const roomsize = Math.max(1, Math.round(num('roomsize')));
+      const room_nights = Math.max(1, Math.round(num('room_nights')));
+
+      const electricity_kwh = Math.max(0, num('electricity_kwh'));
+      const solar_pct = clamp(num('solar_pct'), 0, 100);
+      const gas_therms = Math.max(0, num('gas_therms'));
+      const diesel_l = Math.max(0, num('diesel_l'));
+      const water_m3 = Math.max(0, num('water_m3'));
+      const waste_kg = Math.max(0, num('waste_kg'));
+      const recycle_pct = clamp(num('recycle_pct'), 0, 100);
+      const shuttle_km = Math.max(0, num('shuttle_km'));
+
+      const ef_elec = EMISSION_FACTORS.electricity[region] ?? EMISSION_FACTORS.electricity.global;
+      const ef_gas = EMISSION_FACTORS.natural_gas_therm;
+      const ef_diesel = EMISSION_FACTORS.diesel_l;
+      const ef_water = EMISSION_FACTORS.water_m3;
+      const ef_waste = EMISSION_FACTORS.waste_kg;
+      const ef_shuttle = EMISSION_FACTORS.shuttle_km;
+
+      // Scope 2 (electricity) after solar offset
+      const solar_fraction = solar_pct / 100;
+      const grid_electricity_kwh = electricity_kwh * (1 - solar_fraction);
+      const scope2 = grid_electricity_kwh * ef_elec;
+
+      // Scope 1 direct fuels
+      const scope1_gas = gas_therms * ef_gas;
+      const scope1_diesel = diesel_l * ef_diesel;
+      const scope1_vehicle = shuttle_km * ef_shuttle;
+      const scope1 = scope1_gas + scope1_diesel + scope1_vehicle;
+
+      // Scope 3: waste + water (basic)
+      const recycled_kg = waste_kg * (recycle_pct / 100);
+      const residual_waste = Math.max(0, waste_kg - recycled_kg);
+      const waste_emissions = residual_waste * ef_waste;
+      const water_emissions = water_m3 * ef_water;
+      const scope3 = waste_emissions + water_emissions;
+
+      const total = scope1 + scope2 + scope3;
+      const per_room_night = total / Math.max(1, room_nights);
+
+      // Insights
+      const pct_scope1 = total ? round((scope1/total)*100) : 0;
+      const pct_scope2 = total ? round((scope2/total)*100) : 0;
+      const pct_scope3 = total ? round((scope3/total)*100) : 0;
+
+      let insight = "";
+      if(pct_scope2 >= 50) insight = `Electricity is the largest contributor (${pct_scope2}% of emissions). Consider efficiency, lighting/HVAC improvements, and on-site renewables.`;
+      else if(pct_scope1 >= 50) insight = `Direct fuel use (gas/diesel) dominates (${pct_scope1}% of emissions). Consider boiler upgrades, heat recovery, and electrification.`;
+      else if(pct_scope3 >= 40) insight = `Scope 3 (water/waste) is substantial (${pct_scope3}%). Improve recycling, water-saving fixtures, and laundry processes.`;
+      else insight = `Emissions are distributed. Target the largest contributors first for best impact.`;
+
+      const detail = {
+        hotel_name,
+        address,
+        region,
+        rooms,
+        roomsize,
+        room_nights,
+        inputs: { electricity_kwh, solar_pct, gas_therms, diesel_l, water_m3, waste_kg, recycle_pct, shuttle_km },
+        emission_factors: { ef_elec, ef_gas, ef_diesel, ef_water, ef_waste, ef_shuttle },
+        breakdown_kg: { scope1: round(scope1), scope2: round(scope2), scope3: round(scope3), total: round(total), per_room_night: round(per_room_night) },
+        percentages: { pct_scope1, pct_scope2, pct_scope3 },
+        insight,
+        notes: [
+          "This is a simple estimate using public emission factors. For formal LCA, consult an accredited practitioner.",
+          "Solar reduction assumes on-site generation displaces grid electricity 1:1.",
+          "Scope 3 in this tool is limited to water & waste. Guest travel, purchased goods, and laundry are not included by default."
+        ]
+      };
+
+      return detail;
+    }
+
+    function renderResults(detail){
+      $id('resultsCard').style.display = 'block';
+      $id('hotelTitle').textContent = detail.hotel_name + " — Emissions Snapshot";
+
+      $id('totalCO2').textContent = detail.breakdown_kg.total.toLocaleString() + " kg";
+      $id('perRoomNight').textContent = detail.breakdown_kg.per_room_night.toLocaleString() + " kg";
+      $id('scope1').textContent = detail.breakdown_kg.scope1.toLocaleString() + " kg";
+      $id('scope2').textContent = detail.breakdown_kg.scope2.toLocaleString() + " kg";
+      $id('scope3').textContent = detail.breakdown_kg.scope3.toLocaleString() + " kg";
+
+      $id('detailPre').textContent = JSON.stringify(detail, null, 2);
+      $id('insightText').textContent = detail.insight;
+
+      const vals = [detail.breakdown_kg.scope1, detail.breakdown_kg.scope2, detail.breakdown_kg.scope3];
+      const labels = ['Scope 1 (direct)','Scope 2 (electricity)','Scope 3 (waste+water)'];
+      renderChart(vals, labels);
+
+      window.__latest_detail = detail;
+    }
+
+    // CSV export
+    function downloadCsv(){
+      const d = window.__latest_detail;
+      if(!d) return alert("Run a calculation first.");
+      const rows = [
+        ["Hotel", d.hotel_name],
+        ["Region", d.region],
+        ["Rooms", d.rooms],
+        ["Avg room size (m2)", d.roomsize],
+        ["Room nights (annual)", d.room_nights],
+        [],
+        ["Input: Electricity (kWh)", d.inputs.electricity_kwh],
+        ["Input: Solar %", d.inputs.solar_pct],
+        ["Input: Gas (therms)", d.inputs.gas_therms],
+        ["Input: Water (m3)", d.inputs.water_m3],
+        ["Input: Waste (kg)", d.inputs.waste_kg],
+        [],
+        ["Scope 1 (kg CO2e)", d.breakdown_kg.scope1],
+        ["Scope 2 (kg CO2e)", d.breakdown_kg.scope2],
+        ["Scope 3 (kg CO2e)", d.breakdown_kg.scope3],
+        ["Total (kg CO2e)", d.breakdown_kg.total],
+        ["CO2e per room-night (kg)", d.breakdown_kg.per_room_night],
+      ];
+      const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = (d.hotel_name.replace(/\s+/g,'_')||'hotel') + '_lca.csv';
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    }
+
+    // PDF export (builds a rich node, embeds chart as image)
+    async function downloadPdf(){
+      const d = window.__latest_detail;
+      if(!d) return alert("Run a calculation first.");
+
+      // Convert chart canvas to image with higher resolution
+      let chartImg = "";
+      try {
+        const canvas = $id('emChart');
+        const scale = 2;
+        const tmp = document.createElement('canvas');
+        tmp.width = canvas.width * scale;
+        tmp.height = canvas.height * scale;
+        const tctx = tmp.getContext('2d');
+        tctx.scale(scale, scale);
+        tctx.drawImage(canvas, 0, 0);
+        chartImg = tmp.toDataURL('image/png', 0.95);
+      } catch(e){
+        chartImg = "";
+      }
+
+      // Build report node with professional styling matching website design
+      const node = document.createElement('div');
+      node.style.fontFamily = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      node.style.padding = '24px';
+      node.style.color = '#0f172a';
+      node.style.lineHeight = '1.6';
+      node.style.backgroundColor = '#ffffff';
+
+      // Header with accent color
+      node.innerHTML = `
+        <div style="border-bottom:3px solid #0ea5a4;padding-bottom:16px;margin-bottom:20px">
+          <h1 style="margin:0 0 4px 0;font-size:28px;font-weight:700;color:#0f172a">${escapeHtml(d.hotel_name)}</h1>
+          ${d.address ? `<p style="margin:0 0 4px 0;font-size:13px;color:#475569">${escapeHtml(d.address)}</p>` : ''}
+          <p style="margin:0;font-size:14px;color:#64748b;font-weight:500">Carbon Footprint Assessment Report</p>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#64748b;margin-bottom:20px">
+          <div>
+            <span style="font-weight:600">Generated:</span> ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}<br/>
+            <span style="font-weight:600">Report By:</span> AmicuServices LLC 2026
+          </div>
+          <div style="text-align:right">
+            <span style="font-weight:600">Tool:</span> Hotel LCA Calculator v1.0
+          </div>
+        </div>
+      `;
+
+      // Key Metrics Section
+      node.innerHTML += `
+        <div style="background:#f6f9fb;border-radius:12px;padding:16px;margin-bottom:20px;border-left:4px solid #0ea5a4">
+          <h3 style="margin:0 0 12px 0;font-size:16px;font-weight:600;color:#0f172a">Key Emissions Metrics</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div>
+              <div style="font-size:12px;color:#64748b;font-weight:500;margin-bottom:4px">Total CO₂e (kg/year)</div>
+              <div style="font-size:24px;font-weight:700;color:#0ea5a4">${d.breakdown_kg.total}</div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:#64748b;font-weight:500;margin-bottom:4px">Per Room-Night (kg)</div>
+              <div style="font-size:24px;font-weight:700;color:#06b6d4">${d.breakdown_kg.per_room_night}</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Emissions Breakdown Table
+      node.innerHTML += `
+        <div style="margin-bottom:20px">
+          <h3 style="margin:0 0 12px 0;font-size:16px;font-weight:600;color:#0f172a">Emissions Breakdown by Scope</h3>
+          <table style="width:100%;border-collapse:collapse;background:#ffffff">
+            <thead>
+              <tr style="background:#f1f5f9;border-bottom:2px solid #0ea5a4">
+                <th style="padding:12px;text-align:left;font-size:13px;font-weight:600;color:#0f172a">Scope</th>
+                <th style="padding:12px;text-align:right;font-size:13px;font-weight:600;color:#0f172a">CO₂e (kg)</th>
+                <th style="padding:12px;text-align:right;font-size:13px;font-weight:600;color:#0f172a">Percentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid #e6edf3">
+                <td style="padding:12px;font-weight:500;color:#0f172a">Scope 1 (Direct Emissions)</td>
+                <td style="padding:12px;text-align:right;color:#0f172a">${d.breakdown_kg.scope1}</td>
+                <td style="padding:12px;text-align:right;color:#0ea5a4;font-weight:600">${d.percentages.pct_scope1}%</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e6edf3">
+                <td style="padding:12px;font-weight:500;color:#0f172a">Scope 2 (Indirect - Energy)</td>
+                <td style="padding:12px;text-align:right;color:#0f172a">${d.breakdown_kg.scope2}</td>
+                <td style="padding:12px;text-align:right;color:#0ea5a4;font-weight:600">${d.percentages.pct_scope2}%</td>
+              </tr>
+              <tr style="background:#f6f9fb;font-weight:600">
+                <td style="padding:12px;color:#0f172a">Scope 3 (Other Indirect)</td>
+                <td style="padding:12px;text-align:right;color:#0f172a">${d.breakdown_kg.scope3}</td>
+                <td style="padding:12px;text-align:right;color:#0ea5a4">${d.percentages.pct_scope3}%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      // Chart and Calculation Details side by side
+      node.innerHTML += `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+          <div>
+            <h3 style="margin:0 0 12px 0;font-size:14px;font-weight:600;color:#0f172a">Emissions Distribution</h3>
+            <div style="background:#f6f9fb;border-radius:12px;padding:12px;text-align:center">
+              <img src="${chartImg}" style="max-width:100%;height:auto;width:240px;border-radius:8px;box-shadow:0 4px 12px rgba(12,18,31,0.08)" />
+            </div>
+          </div>
+          <div>
+            <h3 style="margin:0 0 12px 0;font-size:14px;font-weight:600;color:#0f172a">Calculation Details</h3>
+            <div style="background:#f6f9fb;border-radius:12px;padding:12px;font-size:12px">
+              <table style="width:100%;border-collapse:collapse">
+                <tr style="border-bottom:1px solid #e6edf3">
+                  <td style="padding:8px 0;color:#64748b">Annual Room Nights</td>
+                  <td style="padding:8px 0;text-align:right;font-weight:500;color:#0f172a">${d.room_nights}</td>
+                </tr>
+                <tr style="border-bottom:1px solid #e6edf3">
+                  <td style="padding:8px 0;color:#64748b">Region</td>
+                  <td style="padding:8px 0;text-align:right;font-weight:500;color:#0f172a">${d.region}</td>
+                </tr>
+                <tr style="border-bottom:1px solid #e6edf3">
+                  <td style="padding:8px 0;color:#64748b">Calculation Basis</td>
+                  <td style="padding:8px 0;text-align:right;font-weight:500;color:#0f172a">GHG Protocol</td>
+                </tr>
+                <tr style="border-bottom:1px solid #e6edf3">
+                  <td style="padding:8px 0;color:#64748b">Scope 1 Total</td>
+                  <td style="padding:8px 0;text-align:right;font-weight:500;color:#0f172a">${d.breakdown_kg.scope1} kg</td>
+                </tr>
+                <tr style="border-bottom:1px solid #e6edf3">
+                  <td style="padding:8px 0;color:#64748b">Scope 2 Total</td>
+                  <td style="padding:8px 0;text-align:right;font-weight:500;color:#0f172a">${d.breakdown_kg.scope2} kg</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#64748b">Scope 3 Total</td>
+                  <td style="padding:8px 0;text-align:right;font-weight:500;color:#0f172a">${d.breakdown_kg.scope3} kg</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Narrative sections (allow natural paging and avoid truncation)
+      node.innerHTML += `
+        <div style="margin-bottom:20px;break-inside:avoid-page;page-break-inside:avoid">
+          <h3 style="margin:0 0 12px 0;font-size:16px;font-weight:600;color:#0f172a">Key Insights</h3>
+          <p style="margin:0;color:#0f172a;line-height:1.6;font-size:14px">${escapeHtml(d.insight)}</p>
+        </div>
+
+        <div style="background:#eef2f2;border-radius:12px;padding:16px;border-left:4px solid #0ea5a4;margin-bottom:20px;break-inside:avoid-page;page-break-inside:avoid">
+          <h3 style="margin:0 0 12px 0;font-size:16px;font-weight:600;color:#0f172a">Recommendations</h3>
+          <ul style="margin:0;padding-left:20px;color:#0f172a;font-size:14px">
+            <li style="margin-bottom:8px">Focus on the largest emissions source first (see chart on page 1).</li>
+            <li style="margin-bottom:8px">For electricity-heavy hotels: upgrade to LED lighting, optimize HVAC controls, consider solar + battery systems.</li>
+            <li style="margin-bottom:8px">For gas-heavy hotels: evaluate boiler efficiency, consider heat-pump electrification where feasible.</li>
+            <li>Reduce Scope 3 emissions by improving recycling programs, sustainable textile services, and water-saving fixtures.</li>
+          </ul>
+        </div>
+
+        <div style="background:#f6f9fb;border-radius:12px;padding:16px;margin-bottom:20px;break-inside:avoid-page;page-break-inside:avoid">
+          <h3 style="margin:0 0 12px 0;font-size:16px;font-weight:600;color:#0f172a">Disclaimer</h3>
+          <p style="margin:0;color:#0f172a;line-height:1.6;font-size:13px">This report is an estimate using public emission factors and may vary based on local energy grids and operational practices. For certification purposes, engage a qualified LCA professional and obtain utility bills for verification.</p>
+        </div>
+      `;
+
+      // PDF options with enhanced settings
+      const opt = {
+        margin: [12, 12, 12, 12],
+        filename: (d.hotel_name.replace(/\s+/g,'_')||'hotel') + '_lca_report.pdf',
+        image: { type: 'png', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false, allowTaint: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      // Generate PDF
+      html2pdf().set(opt).from(node).save();
+    }
+
+    // Badge HTML copy
+    function badgeHtmlCopy(){
+      const d = window.__latest_detail;
+      if(!d) return alert("Run a calculation first.");
+      const html = `<div style="display:inline-block;padding:8px 12px;border-radius:8px;background:#e6fffa;border:1px solid #ccfbf1;font-family:Inter,-apple-system,Segoe UI,Roboto;margin:4px">
+  <strong style="color:#0f172a">${escapeHtml(d.hotel_name)}</strong><br/>
+  <small style="color:#0f766e">CO₂e per room-night: ${d.breakdown_kg.per_room_night} kg</small>
+</div>`;
+      navigator.clipboard?.writeText(html).then(() => alert("Badge HTML copied to clipboard."), () => prompt("Copy this HTML:", html));
+    }
+
+    // Reset form
+    function resetForm(){
+      const defaults = {
+        hotel_name:'', region:'global', rooms:100, roomsize:35, room_nights:32000,
+        electricity_kwh:700000, solar_pct:5, gas_therms:30000, diesel_l:0,
+        water_m3:20000, waste_kg:45000, recycle_pct:30, shuttle_km:15000
+      };
+      Object.keys(defaults).forEach(k => {
+        const el = $id(k);
+        if(el) el.value = defaults[k];
+      });
+      $id('resultsCard').style.display = 'none';
+      window.__latest_detail = null;
+      if(emChart){ emChart.destroy(); emChart = null; }
+    }
+
+    // attach events
+    $id('calcBtn').addEventListener('click', () => {
+      const detail = calculate();
+      renderResults(detail);
+      $id('resultsCard').scrollIntoView({behavior:'smooth'});
+    });
+    $id('downloadCsv').addEventListener('click', downloadCsv);
+    $id('downloadPdf').addEventListener('click', downloadPdf);
+    $id('badgeBtn').addEventListener('click', badgeHtmlCopy);
+    $id('resetBtn').addEventListener('click', resetForm);
+
+    // init
+    resetForm();
+
+  })();
+  </script>
+</body>
+</html>

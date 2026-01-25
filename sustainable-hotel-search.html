@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sustainable Hotel Search — AmicusTravel</title>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<!-- Chart.js (optional, already available if you want graphs later) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+:root{
+  --accent:#0ea5a4; --muted:#64748b; --bg:#f6f9fb; --card:#fff;
+  --radius:12px;
+}
+*{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;}
+body{margin:0;background:var(--bg);color:#0f172a}
+.container{max-width:1200px;margin:20px auto;padding:18px}
+.header{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.logo{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#06b6d4,var(--accent));display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+.title{font-size:20px;font-weight:700;color:var(--accent)}
+.layout{display:grid;grid-template-columns:350px 1fr;gap:16px}
+@media(max-width:980px){.layout{grid-template-columns:1fr}}
+.card{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:0 8px 24px rgba(12,18,31,0.06)}
+.input,select,textarea{width:100%;padding:8px;border:1px solid #e6edf3;border-radius:8px;margin-bottom:8px}
+.btn{background:var(--accent);color:white;padding:10px 12px;border-radius:10px;border:none;cursor:pointer}
+.btn.ghost{background:#eef2f2;color:#0f172a}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.hotel-card{border-radius:8px;padding:12px;background:#fff;margin-bottom:10px;box-shadow:0 2px 8px rgba(2,6,23,0.04);border:1px solid #e6edf3;cursor:pointer;transition:all 0.2s ease}
+.hotel-card:hover{box-shadow:0 4px 12px rgba(2,6,23,0.1);border-color:var(--accent)}
+.small{font-size:13px;color:var(--muted)}
+.map-wrap{height:520px;border-radius:10px;overflow:hidden}
+.results-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.flex{display:flex;gap:8px;align-items:center}
+.badge{padding:6px 8px;border-radius:999px;background:#eef2f2;color:#0f766e;font-weight:600;font-size:12px}
+.footer{margin-top:18px;font-size:13px;color:var(--muted);text-align:center}
+
+/* Leaflet tooltip styling */
+.leaflet-tooltip {
+  background-color: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+/* mobile tweaks */
+@media(max-width:520px){
+  .map-wrap{height:350px}
+  .logo{width:48px;height:48px}
+}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">AC</div>
+      <div>
+        <div class="title">AmicusTravel — Sustainable Hotel Search</div>
+        <div class="small">Find eco-friendly hotels (EU, US, Asia, Middle East). Submit hotels, see map, or list your CO2 rating.</div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- LEFT: Filters + submission -->
+      <div>
+        <section class="card">
+          <div style="font-weight:700;margin-bottom:8px">Search Filters</div>
+          <div class="filter-row">
+            <select id="regionFilter" class="input">
+              <option value="">Region (All)</option>
+              <option value="US">United States</option>
+              <option value="EU">Europe</option>
+              <option value="Asia">Asia</option>
+              <option value="Middle East">Middle East</option>
+              <option value="Africa">Africa</option>
+              <option value="South America">South America</option>
+              <option value="Latin America">Latin America</option>
+            </select>
+
+            <select id="co2Filter" class="input">
+              <option value="">CO₂ Rating</option>
+              <option value="Ultra-Low">Ultra-Low</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+            </select>
+          </div>
+
+          <div class="filter-row">
+            <select id="certFilter" class="input">
+              <option value="">Certification</option>
+              <option>LEED Platinum</option>
+              <option>LEED Gold</option>
+              <option>EarthCheck</option>
+              <option>Green Globe</option>
+            </select>
+            <select id="starFilter" class="input">
+              <option value="">Star Rating</option>
+              <option value="5">⭐⭐⭐⭐⭐ 5-star</option>
+              <option value="4">⭐⭐⭐⭐ 4-star</option>
+              <option value="3">⭐⭐⭐ 3-star</option>
+              <option value="2">⭐⭐ 2-star</option>
+              <option value="1">⭐ 1-star</option>
+            </select>
+          </div>
+
+          <div class="filter-row">
+            <input id="query" class="input" placeholder="Search by city or country"/>
+          </div>
+
+          <div style="display:flex;gap:8px">
+            <button id="searchBtn" class="btn">Search</button>
+            <button id="clearBtn" class="btn ghost">Clear</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- RIGHT: Results + Map -->
+      <div>
+        <section class="card">
+          <div class="results-header">
+            <div>
+              <div style="font-weight:700">Search Results</div>
+              <div class="small">Click a card to view details and book. All links go directly to Google Maps.</div>
+            </div>
+            <div class="flex">
+              <div class="badge">Dataset: OpenStreetMap + local submissions</div>
+            </div>
+          </div>
+
+          <div id="resultsList" style="max-height:420px;overflow-y:auto;margin-bottom:16px;border:1px solid #e6edf3;border-radius:8px;padding:8px">
+            <!-- Search results cards display here with scrolling enabled - shows ~4-5 cards before scrolling -->
+          </div>
+        </section>
+
+        <section class="card" style="margin-top:12px">
+          <div style="font-weight:700;margin-bottom:8px">Map View</div>
+          <div class="map-wrap card" id="map" style="padding:0"></div>
+        </section>
+
+        <section class="card" style="margin-top:12px">
+          <div style="font-weight:700;margin-bottom:6px">Selected Hotel Details</div>
+          <div id="selected" class="hotel-card small"></div>
+        </section>
+      </div>
+    </div>
+
+    <div class="footer">AmicusCarbon — prototype directory • Remember: Booking & Expedia API imports require server-side code and API registrations.</div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+  // ---------- Fetch hotels from OpenStreetMap API ----------
+  async function fetchOpenMapHotels() {
+    // Return empty array on initial load - user must enter a search
+    return [];
+  }
+
+  // ---------- App state ----------
+  let hotels = [];          // combined dataset (sample + local)
+  let allHotels = [];       // store all loaded hotels for filtering
+  let markers = {};         // map markers
+  let map, markersLayer;
+
+  // initialize
+  async function init() {
+    const stored = localStorage.getItem('amicus_hotels_v1');
+    const local = stored ? JSON.parse(stored) : [];
+
+    const apiHotels = await fetchOpenMapHotels();
+    // Don't load hotels on init - only show results after search
+    allHotels = [...apiHotels, ...local];  // keep in backup for filtering but don't display
+    hotels = [];  // start with empty results
+
+    initMap();
+    renderResults([]);  // start with no results displayed
+  }
+
+  // initialize map
+  function initMap(){
+    map = L.map('map', {zoomControl:true}).setView([20,0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '© OpenStreetMap'
+    }).addTo(map);
+    markersLayer = L.layerGroup().addTo(map);
+    refreshMarkers();
+  }
+
+  function refreshMarkers(){
+    if(!map || !markersLayer) {
+      console.warn('Map or markersLayer not initialized yet');
+      return;
+    }
+    markersLayer.clearLayers();
+    markers = {};
+    console.log('Refreshing markers for', hotels.length, 'hotels');
+    hotels.forEach(h => {
+      console.log('Hotel:', h.name, 'ID:', h.id, 'Lat:', h.lat, 'Lon:', h.lon);
+      if(h.lat && h.lon){
+        // Use default Leaflet markers (small blue pins)
+        const m = L.marker([h.lat, h.lon]).addTo(markersLayer);
+        m.bindPopup(`<strong>${h.name}</strong><br/><small>${h.country}</small>`);
+        m.on('click', ()=> {
+          console.log('Marker clicked for hotel id:', h.id);
+          selectHotel(h.id);
+        });
+        m.bindTooltip(h.name, { permanent: false, direction: 'top' });
+        markers[h.id] = m;
+      } else {
+        console.warn('Hotel missing coordinates:', h.name);
+      }
+    });
+  }
+
+  // render result cards
+  function renderResults(list){
+    const container = document.getElementById('resultsList');
+    if(!list || list.length===0){
+      container.innerHTML = '';
+      return;
+    }
+    container.innerHTML = list.map(h => `
+      <div class="hotel-card" data-id="${h.id}">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:700">${h.name}</div>
+          <div class="small">${h.region} • ${h.country}</div>
+        </div>
+        <div class="small" style="margin-top:8px">${h.notes || ''}</div>
+        <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+          <button class="small" style="background:none;border:none;color:var(--accent);cursor:pointer;text-decoration:underline;padding:0" data-url="${h.affiliate_url}">Book / Details →</button>
+          <div class="small">${h.certifications ? h.certifications.join(', ') : ''}</div>
+        </div>
+      </div>
+    `).join('');
+
+    // attach click handlers
+    container.querySelectorAll('.hotel-card').forEach(el => {
+      el.addEventListener('click', () => {
+        const id = el.getAttribute('data-id');
+        selectHotel(id);
+        // pan to marker if present
+        const h = hotels.find(x => x.id===id);
+        if(h && h.lat && h.lon) map.setView([h.lat, h.lon], 8);
+      });
+      // Book button handler
+      const bookBtn = el.querySelector('button[data-url]');
+      if(bookBtn) {
+        bookBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const url = bookBtn.getAttribute('data-url');
+          if(url && url !== '#') window.open(url, '_blank');
+        });
+      }
+    });
+  }
+
+  // select hotel
+  function selectHotel(id){
+    console.log('selectHotel called with id:', id, 'Type:', typeof id);
+    console.log('Available hotels:', hotels.map(h => ({ id: h.id, idType: typeof h.id, name: h.name, country: h.country })));
+    
+    // Try to find by id - handle both number and string comparisons
+    let h = hotels.find(x => x.id === id);
+    if(!h) {
+      h = hotels.find(x => String(x.id) === String(id));
+    }
+    
+    console.log('Found hotel:', h);
+    if(!h) {
+      console.warn('Hotel not found with id:', id);
+      document.getElementById('selected').innerHTML = '<div class="small">No hotel found</div>';
+      return;
+    }
+    
+    const sel = document.getElementById('selected');
+    const displayCountry = h.country || h.city || 'Unknown Location';
+    const displayRegion = h.region || '';
+    sel.innerHTML = `
+      <div style="font-weight:700; font-size:16px">${h.name}</div>
+      <div class="small" style="margin-top:4px">${displayCountry} ${displayRegion ? '• ' + displayRegion : ''}</div>
+      <div style="margin-top:8px" class="small">${h.notes || h.description || 'Eco-friendly accommodation'}</div>
+      <div style="margin-top:8px"><strong>Certifications:</strong> ${h.certifications && h.certifications.length > 0 ? h.certifications.join(', ') : 'LEED Certified'}</div>
+      <div style="margin-top:8px"><strong>CO₂ Rating:</strong> ${h.co2_rating || 'Medium'}</div>
+      <div style="margin-top:12px"><button class="btn" id="bookBtn" data-url="${h.affiliate_url || h.website || '#'}" style="cursor:pointer; width:100%">Book / Learn More →</button></div>
+    `;
+    
+    // Attach handler to book button
+    const bookBtn = document.getElementById('bookBtn');
+    if(bookBtn) {
+      bookBtn.addEventListener('click', () => {
+        const url = bookBtn.getAttribute('data-url');
+        if(url && url !== '#') {
+          console.log('Opening URL:', url);
+          window.open(url, '_blank');
+        }
+      });
+    }
+  }
+
+  // search logic
+  document.getElementById('searchBtn').addEventListener('click', async () => {
+    const region = document.getElementById('regionFilter').value;
+    const cert = document.getElementById('certFilter').value;
+    const co2 = document.getElementById('co2Filter').value;
+    const stars = document.getElementById('starFilter').value;
+    const q = document.getElementById('query').value.trim();
+
+    console.log('Search clicked with query:', q);
+
+    // If query is entered (destination), fetch from API
+    if(q) {
+      try {
+        console.log('Fetching from API for destination:', q);
+        // Clear previous results before fetching new ones
+        hotels = [];
+        allHotels = [];
+        renderResults([]);
+        markersLayer.clearLayers();
+        
+        const res = await fetch(`http://localhost:5000/api/hotels/search?city=${encodeURIComponent(q)}&country=`);
+        console.log('API response status:', res.status);
+        
+        if(!res.ok) {
+          throw new Error(`API returned status ${res.status}`);
+        }
+        
+        const data = await res.json();
+        console.log('API returned data:', data);
+        console.log('API hotels:', data.hotels);
+        if(data.hotels && data.hotels.length > 0) {
+          console.log('First API hotel:', data.hotels[0]);
+        }
+        
+        if(!data.hotels || data.hotels.length === 0) {
+          alert('No hotels found for "' + q + '". Try a different destination.');
+          return;
+        }
+        const apiHotels = (data.hotels || []).map(h => {
+          const starsNum = h.stars || 3;
+          const starsDisplay = '\u2b50'.repeat(Math.min(5, Math.max(1, starsNum))) + ` ${starsNum}-star`;
+          const co2Rating = h.leed ? 'Ultra-Low' : 'Medium';
+          const hotelName = h.name || `Hotel in ${h.city || h.country || 'Unknown'}`;
+          // Determine region based on country
+          let hotelRegion = 'Other';
+          if (h.country) {
+            const countryLower = h.country.toLowerCase();
+            if (['thailand', 'vietnam', 'cambodia', 'laos', 'philippines', 'indonesia', 'malaysia', 'singapore', 'japan', 'south korea', 'korea', 'china', 'india', 'bangladesh', 'pakistan', 'sri lanka', 'nepal', 'myanmar', 'burma', 'mongolia', 'taiwan', 'hong kong'].includes(countryLower)) {
+              hotelRegion = 'Asia';
+            } else if (['italy', 'france', 'spain', 'germany', 'united kingdom', 'portugal', 'greece', 'switzerland', 'austria', 'netherlands', 'belgium', 'czech republic', 'czechia', 'poland', 'sweden', 'norway', 'denmark', 'ireland', 'hungary', 'croatia', 'iceland', 'slovenia', 'romania'].includes(countryLower)) {
+              hotelRegion = 'EU';
+            } else if (['united arab emirates', 'uae', 'saudi arabia', 'qatar', 'oman', 'jordan', 'lebanon', 'israel', 'turkey'].includes(countryLower)) {
+              hotelRegion = 'Middle East';
+            } else if (['argentina', 'brazil', 'chile', 'colombia', 'ecuador', 'peru', 'venezuela', 'bolivia', 'paraguay', 'uruguay', 'guyana', 'suriname'].includes(countryLower)) {
+              hotelRegion = 'South America';
+            } else if (['mexico', 'costa rica', 'panama', 'honduras', 'guatemala', 'el salvador', 'nicaragua', 'belize'].includes(countryLower)) {
+              hotelRegion = 'Latin America';
+            } else if (['united states', 'canada', 'usa', 'us'].includes(countryLower)) {
+              hotelRegion = 'US';
+            } else if (['australia', 'new zealand'].includes(countryLower)) {
+              hotelRegion = 'Oceania';
+            } else if (['egypt', 'south africa', 'kenya', 'morocco', 'tanzania', 'uganda'].includes(countryLower)) {
+              hotelRegion = 'Africa';
+            }
+          }
+          const hotelObj = {
+            id: h.id,
+            name: hotelName,
+            city: h.city,
+            country: h.country,
+            region: hotelRegion,
+            certifications: h.leed ? ['LEED'] : h.certifications || [],
+            co2_rating: co2Rating,
+            stars: starsNum,
+            notes: `Eco-friendly hotel \u2022 ${starsDisplay} \u2022 CO\u2082: ${co2Rating}`,
+            description: h.description || '',
+            // Create Google Maps booking link
+            affiliate_url: `https://www.google.com/maps/search/${encodeURIComponent(h.name || 'hotel')}+${encodeURIComponent(h.city || h.country || '')}`,
+            lat: parseFloat(h.lat),
+            lon: parseFloat(h.lon),
+            amenities: h.amenities || []
+          };
+          console.log('Mapped hotel:', hotelObj);
+          return hotelObj;
+        });
+        
+        console.log('Mapped API hotels:', apiHotels);
+        console.log('First hotel coords:', apiHotels[0]?.lat, apiHotels[0]?.lon);
+        
+        const localHotels = hotels.filter(x => x.id && String(x.id).startsWith('local-'));
+        hotels = [...apiHotels, ...localHotels];
+        allHotels = [...hotels];  // update backup
+        console.log('Total hotels after merge:', hotels.length);
+        console.log('Hotels before country filter:', hotels.map(h => ({ name: h.name, country: h.country, region: h.region })));
+        
+        // Temporarily disabled: Filter out hotels without a valid country - for debugging
+        // hotels = hotels.filter(h => h.country && h.country.trim() !== '');
+        
+        console.log('Hotels to display:', hotels.length);
+        console.log('Hotels after country validation:', hotels.length);
+        
+        // Apply filters to search results
+        let filteredResults = hotels;
+        if(region || cert || co2 || stars) {
+          filteredResults = hotels.filter(h => {
+            if(region && h.region !== region) return false;
+            if(co2 && h.co2_rating !== co2) return false;
+            if(cert && !(h.certifications || []).includes(cert)) return false;
+            if(stars && h.stars && parseInt(h.stars) !== parseInt(stars)) return false;
+            return true;
+          });
+        }
+        
+        renderResults(filteredResults);
+        refreshMarkers();
+        
+        if(map && apiHotels.length > 0 && apiHotels[0].lat && apiHotels[0].lon) {
+          console.log('Centering map on:', apiHotels[0].lat, apiHotels[0].lon);
+          map.setView([apiHotels[0].lat, apiHotels[0].lon], 6);
+        } else if(map && hotels.length > 0) {
+          const firstHotel = hotels.find(h => h.lat && h.lon);
+          if(firstHotel) {
+            console.log('Centering map on first valid hotel:', firstHotel.lat, firstHotel.lon);
+            map.setView([firstHotel.lat, firstHotel.lon], 6);
+          }
+        }
+      } catch(e) {
+        console.error('API search failed:', e);
+        alert('Could not search for destination. Error: ' + e.message);
+      }
+      return;
+    }
+
+    // Otherwise filter local results from allHotels
+    const filtered = allHotels.filter(h => {
+      if(region && h.region !== region) return false;
+      if(co2 && h.co2_rating !== co2) return false;
+      if(cert && !(h.certifications || []).includes(cert)) return false;
+      if(stars && h.stars && parseInt(h.stars) !== parseInt(stars)) return false;
+      return true;
+    });
+
+    console.log('Filtered results:', filtered);
+    hotels = filtered;
+    renderResults(filtered);
+    refreshMarkers();
+    
+    // update markers visibility: simple approach - recenter to first
+    if(map && filtered.length>0 && filtered[0].lat && filtered[0].lon) map.setView([filtered[0].lat, filtered[0].lon], 4);
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    document.getElementById('regionFilter').value='';
+    document.getElementById('co2Filter').value='';
+    document.getElementById('certFilter').value='';
+    document.getElementById('query').value='';
+    hotels = [...allHotels];
+    renderResults(hotels);
+    refreshMarkers();
+    if(map) map.setView([20,0],2);
+  });
+
+  // submit hotel (saves to localStorage)
+  const submitBtn = document.getElementById('submitHotel');
+  if(submitBtn) {
+    submitBtn.addEventListener('click', () => {
+      const name = document.getElementById('s_name').value.trim();
+      if(!name) return alert('Please enter hotel name');
+      const h = {
+        id: 'local-' + Date.now(),
+        name,
+        country: document.getElementById('s_country').value.trim(),
+        region: document.getElementById('s_region').value,
+        certifications: document.getElementById('s_cert').value.split(',').map(s=>s.trim()).filter(Boolean),
+        co2_rating: document.getElementById('s_co2').value.trim() || 'Medium',
+        features: (document.getElementById('s_notes').value||'').split(',').map(s=>s.trim()).filter(Boolean),
+        affiliate_url: document.getElementById('s_aff').value.trim() || '#',
+        notes: document.getElementById('s_notes').value.trim(),
+        lat: parseFloat(document.getElementById('s_lat').value) || null,
+        lon: parseFloat(document.getElementById('s_lon').value) || null
+      };
+
+      hotels.push(h);
+      // persist local submissions only (we preserve sampleHotels separately)
+      const localOnly = hotels.filter(x => x.id && x.id.startsWith('local-'));
+      localStorage.setItem('amicus_hotels_v1', JSON.stringify(localOnly));
+      renderResults(hotels);
+      refreshMarkers();
+      alert('Hotel submitted (saved locally). You can Download JSON to export this list.');
+      // clear form
+      ['s_name','s_country','s_cert','s_co2','s_aff','s_notes','s_lat','s_lon'].forEach(id=>{ if(document.getElementById(id)) document.getElementById(id).value=''; });
+    });
+  }
+
+  // download JSON (exports sample + local)
+  const downloadBtn = document.getElementById('downloadJson');
+  if(downloadBtn) {
+    downloadBtn.addEventListener('click', () => {
+      const data = JSON.stringify(hotels, null, 2);
+      const blob = new Blob([data], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'amicus_hotels_export.json';
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
+  }
+
+  // refresh markers and dataset on load
+  init();
+
+  // ---------- Notes for Booking / Expedia API & production ----------
+  /*
+    1) Booking.com & Expedia partner APIs require registration and server-side integration:
+       - Get API keys from partner portal.
+       - Build a backend endpoint that queries the partner API and returns normalized hotel records.
+       - Store partner keys on server (never in client JS).
+       - You can periodically sync partner data and merge into your dataset or serve live search results.
+
+    2) For paid listings / accept payments:
+       - Add PayPal Smart Buttons or Stripe Checkout on the submission or "promote listing" workflow.
+       - After successful payment, tag the submission as 'paid' in your DB.
+
+    3) Scaling search:
+       - Move dataset to a server-side DB and a search index (Algolia or Elasticsearch) for fast faceted search.
+
+    4) Verification:
+       - Provide an "Upload LCA/EPD PDF" workflow (requires a backend to accept files). You can then manually verify and mark hotels as 'verified'.
+
+    5) Map clustering:
+       - Use Leaflet.markercluster plugin for dense maps when you scale up.
+
+    6) Security:
+       - When moving to production, remove storing API credentials in client, enable HTTPS, and validate user uploads on server side.
+  */
+  </script>
+</body>
+</html>

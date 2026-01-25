@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sustainable Restaurant Search — AmicusTravel</title>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<!-- Chart.js (optional, already available if you want graphs later) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+:root{
+  --accent:#0ea5a4; --muted:#64748b; --bg:#f6f9fb; --card:#fff;
+  --radius:12px;
+}
+*{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;}
+body{margin:0;background:var(--bg);color:#0f172a}
+.container{max-width:1200px;margin:20px auto;padding:18px}
+.header{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.logo{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#06b6d4,var(--accent));display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+.title{font-size:20px;font-weight:700;color:var(--accent)}
+.layout{display:grid;grid-template-columns:350px 1fr;gap:16px}
+@media(max-width:980px){.layout{grid-template-columns:1fr}}
+.card{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:0 8px 24px rgba(12,18,31,0.06)}
+.input,select,textarea{width:100%;padding:8px;border:1px solid #e6edf3;border-radius:8px;margin-bottom:8px}
+.btn{background:var(--accent);color:white;padding:10px 12px;border-radius:10px;border:none;cursor:pointer}
+.btn.ghost{background:#eef2f2;color:#0f172a}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.restaurant-card{border-radius:8px;padding:12px;background:#fff;margin-bottom:10px;box-shadow:0 2px 8px rgba(2,6,23,0.04);border:1px solid #e6edf3;cursor:pointer;transition:all 0.2s ease}
+.restaurant-card:hover{box-shadow:0 4px 12px rgba(2,6,23,0.1);border-color:var(--accent)}
+.small{font-size:13px;color:var(--muted)}
+.map-wrap{height:520px;border-radius:10px;overflow:hidden}
+.results-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.flex{display:flex;gap:8px;align-items:center}
+.badge{padding:6px 8px;border-radius:999px;background:#eef2f2;color:#0f766e;font-weight:600;font-size:12px}
+.footer{margin-top:18px;font-size:13px;color:var(--muted);text-align:center}
+
+/* Leaflet tooltip styling */
+.leaflet-tooltip {
+  background-color: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+/* mobile tweaks */
+@media(max-width:520px){
+  .map-wrap{height:350px}
+  .logo{width:48px;height:48px}
+}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">AC</div>
+      <div>
+        <div class="title">AmicusTravel — Sustainable Restaurant Search</div>
+        <div class="small">Find eco-friendly restaurants (EU, US, Asia, Middle East). Submit restaurants, see map, or explore carbon-conscious dining options.</div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- LEFT: Filters + submission -->
+      <div>
+        <section class="card">
+          <div style="font-weight:700;margin-bottom:8px">Search Filters</div>
+          <div class="filter-row">
+            <select id="regionFilter" class="input">
+              <option value="">Region (All)</option>
+              <option value="US">United States</option>
+              <option value="EU">Europe</option>
+              <option value="Asia">Asia</option>
+              <option value="Middle East">Middle East</option>
+              <option value="Africa">Africa</option>
+              <option value="South America">South America</option>
+              <option value="Latin America">Latin America</option>
+            </select>
+
+            <select id="cuisineFilter" class="input">
+              <option value="">Cuisine Type (All)</option>
+              <option value="Vegan">Vegan</option>
+              <option value="Vegetarian">Vegetarian</option>
+              <option value="Organic">Organic</option>
+              <option value="Farm-to-Table">Farm-to-Table</option>
+              <option value="Mediterranean">Mediterranean</option>
+              <option value="Asian Fusion">Asian Fusion</option>
+              <option value="Local">Local Cuisine</option>
+            </select>
+          </div>
+
+          <div class="filter-row">
+            <select id="certFilter" class="input">
+              <option value="">Certification</option>
+              <option>Green Restaurant</option>
+              <option>Organic Certified</option>
+              <option>Fair Trade Certified</option>
+              <option>Michelin Green Star</option>
+              <option>Carbon Neutral</option>
+            </select>
+            <select id="ratingFilter" class="input">
+              <option value="">Rating</option>
+              <option value="5">⭐⭐⭐⭐⭐ 5-star</option>
+              <option value="4">⭐⭐⭐⭐ 4-star</option>
+              <option value="3">⭐⭐⭐ 3-star</option>
+              <option value="2">⭐⭐ 2-star</option>
+              <option value="1">⭐ 1-star</option>
+            </select>
+          </div>
+
+          <div class="filter-row">
+            <input id="query" class="input" placeholder="Search by city, cuisine, or restaurant name"/>
+          </div>
+
+          <div style="display:flex;gap:8px">
+            <button id="searchBtn" class="btn">Search</button>
+            <button id="clearBtn" class="btn ghost">Clear</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- RIGHT: Results + Map -->
+      <div>
+        <section class="card">
+          <div class="results-header">
+            <div>
+              <div style="font-weight:700">Search Results</div>
+              <div class="small">Click a card to view details and find reservations. All links go directly to Google Maps.</div>
+            </div>
+            <div class="flex">
+              <div class="badge">Dataset: OpenStreetMap + local submissions</div>
+            </div>
+          </div>
+
+          <div id="resultsList" style="max-height:420px;overflow-y:auto;margin-bottom:16px;border:1px solid #e6edf3;border-radius:8px;padding:8px">
+            <!-- Search results cards display here with scrolling enabled - shows ~4-5 cards before scrolling -->
+          </div>
+        </section>
+
+        <section class="card" style="margin-top:12px">
+          <div style="font-weight:700;margin-bottom:8px">Map View</div>
+          <div class="map-wrap card" id="map" style="padding:0"></div>
+        </section>
+
+        <section class="card" style="margin-top:12px">
+          <div style="font-weight:700;margin-bottom:6px">Selected Restaurant Details</div>
+          <div id="selected" class="restaurant-card small"></div>
+        </section>
+      </div>
+    </div>
+
+    <div class="footer">AmicusCarbon — prototype directory • Remember: Booking & Expedia API imports require server-side code and API registrations.</div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+  // ---------- Fetch restaurants from OpenStreetMap API ----------
+  async function fetchOpenMapRestaurants() {
+    // Return empty array on initial load - user must enter a search
+    return [];
+  }
+
+  // ---------- App state ----------
+  let restaurants = [];          // combined dataset (sample + local)
+  let allRestaurants = [];       // store all loaded restaurants for filtering
+  let markers = {};              // map markers
+  let map, markersLayer;
+
+  // initialize
+  async function init() {
+    const stored = localStorage.getItem('amicus_restaurants_v1');
+    const local = stored ? JSON.parse(stored) : [];
+
+    const apiRestaurants = await fetchOpenMapRestaurants();
+    // Don't load restaurants on init - only show results after search
+    allRestaurants = [...apiRestaurants, ...local];  // keep in backup for filtering but don't display
+    restaurants = [];  // start with empty results
+
+    initMap();
+    renderResults([]);  // start with no results displayed
+  }
+
+  // initialize map
+  function initMap(){
+    map = L.map('map', {zoomControl:true}).setView([20,0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '© OpenStreetMap'
+    }).addTo(map);
+    markersLayer = L.layerGroup().addTo(map);
+    refreshMarkers();
+  }
+
+  function refreshMarkers(){
+    if(!map || !markersLayer) {
+      console.warn('Map or markersLayer not initialized yet');
+      return;
+    }
+    markersLayer.clearLayers();
+    markers = {};
+    console.log('Refreshing markers for', restaurants.length, 'restaurants');
+    restaurants.forEach(r => {
+      console.log('Restaurant:', r.name, 'ID:', r.id, 'Lat:', r.lat, 'Lon:', r.lon);
+      if(r.lat && r.lon){
+        // Use default Leaflet markers (small blue pins)
+        const m = L.marker([r.lat, r.lon]).addTo(markersLayer);
+        m.bindPopup(`<strong>${r.name}</strong><br/><small>${r.country}</small>`);
+        m.on('click', ()=> {
+          console.log('Marker clicked for restaurant id:', r.id);
+          selectRestaurant(r.id);
+        });
+        m.bindTooltip(r.name, { permanent: false, direction: 'top' });
+        markers[r.id] = m;
+      } else {
+        console.warn('Restaurant missing coordinates:', r.name);
+      }
+    });
+  }
+
+  // render result cards
+  function renderResults(list){
+    const container = document.getElementById('resultsList');
+    if(!list || list.length===0){
+      container.innerHTML = '';
+      return;
+    }
+    container.innerHTML = list.map(r => `
+      <div class="restaurant-card" data-id="${r.id}">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:700">${r.name}</div>
+          <div class="small">${r.region} • ${r.country}</div>
+        </div>
+        <div class="small" style="margin-top:8px">${r.cuisine || 'Sustainable Dining'} • ${r.notes || ''}</div>
+        <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+          <button class="small" style="background:none;border:none;color:var(--accent);cursor:pointer;text-decoration:underline;padding:0" data-url="${r.affiliate_url}">Reserve / Details →</button>
+          <div class="small">${r.certifications ? r.certifications.join(', ') : ''}</div>
+        </div>
+      </div>
+    `).join('');
+
+    // attach click handlers
+    container.querySelectorAll('.restaurant-card').forEach(el => {
+      el.addEventListener('click', () => {
+        const id = el.getAttribute('data-id');
+        selectRestaurant(id);
+        // pan to marker if present
+        const r = restaurants.find(x => x.id===id);
+        if(r && r.lat && r.lon) map.setView([r.lat, r.lon], 8);
+      });
+      // Reserve button handler
+      const reserveBtn = el.querySelector('button[data-url]');
+      if(reserveBtn) {
+        reserveBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const url = reserveBtn.getAttribute('data-url');
+          if(url && url !== '#') window.open(url, '_blank');
+        });
+      }
+    });
+  }
+
+  // select restaurant
+  function selectRestaurant(id){
+    console.log('selectRestaurant called with id:', id, 'Type:', typeof id);
+    console.log('Available restaurants:', restaurants.map(r => ({ id: r.id, idType: typeof r.id, name: r.name, country: r.country })));
+    
+    // Try to find by id - handle both number and string comparisons
+    let r = restaurants.find(x => x.id === id);
+    if(!r) {
+      r = restaurants.find(x => String(x.id) === String(id));
+    }
+    
+    console.log('Found restaurant:', r);
+    if(!r) {
+      console.warn('Restaurant not found with id:', id);
+      document.getElementById('selected').innerHTML = '<div class="small">No restaurant found</div>';
+      return;
+    }
+    
+    const sel = document.getElementById('selected');
+    const displayCountry = r.country || r.city || 'Unknown Location';
+    const displayRegion = r.region || '';
+    sel.innerHTML = `
+      <div style="font-weight:700; font-size:16px">${r.name}</div>
+      <div class="small" style="margin-top:4px">${displayCountry} ${displayRegion ? '• ' + displayRegion : ''}</div>
+      <div style="margin-top:8px" class="small"><strong>Cuisine:</strong> ${r.cuisine || 'Sustainable Dining'}</div>
+      <div style="margin-top:8px" class="small">${r.notes || r.description || 'Eco-friendly restaurant with sustainable practices'}</div>
+      <div style="margin-top:8px"><strong>Certifications:</strong> ${r.certifications && r.certifications.length > 0 ? r.certifications.join(', ') : 'Green Restaurant'}</div>
+      <div style="margin-top:8px"><strong>Sustainability Rating:</strong> ${r.sustainability_rating || 'Medium'}</div>
+      <div style="margin-top:12px"><button class="btn" id="reserveBtn" data-url="${r.affiliate_url || r.website || '#'}" style="cursor:pointer; width:100%">Reserve / Learn More →</button></div>
+    `;
+    
+    // Attach handler to reserve button
+    const reserveBtn = document.getElementById('reserveBtn');
+    if(reserveBtn) {
+      reserveBtn.addEventListener('click', () => {
+        const url = reserveBtn.getAttribute('data-url');
+        if(url && url !== '#') {
+          console.log('Opening URL:', url);
+          window.open(url, '_blank');
+        }
+      });
+    }
+  }
+
+  // search logic
+  document.getElementById('searchBtn').addEventListener('click', async () => {
+    const region = document.getElementById('regionFilter').value;
+    const cuisine = document.getElementById('cuisineFilter').value;
+    const cert = document.getElementById('certFilter').value;
+    const rating = document.getElementById('ratingFilter').value;
+    const q = document.getElementById('query').value.trim();
+
+    console.log('Search clicked with query:', q);
+
+    // If query is entered (destination), fetch from API
+    if(q) {
+      try {
+        console.log('Fetching from API for destination:', q);
+        // Clear previous results before fetching new ones
+        restaurants = [];
+        allRestaurants = [];
+        renderResults([]);
+        markersLayer.clearLayers();
+        
+        const res = await fetch(`http://localhost:5000/api/restaurants/search?city=${encodeURIComponent(q)}&country=`);
+        console.log('API response status:', res.status);
+        
+        if(!res.ok) {
+          throw new Error(`API returned status ${res.status}`);
+        }
+        
+        const data = await res.json();
+        console.log('API returned data:', data);
+        console.log('API restaurants:', data.restaurants);
+        if(data.restaurants && data.restaurants.length > 0) {
+          console.log('First API restaurant:', data.restaurants[0]);
+        }
+        
+        if(!data.restaurants || data.restaurants.length === 0) {
+          alert('No restaurants found for "' + q + '". Try a different destination.');
+          return;
+        }
+        const apiRestaurants = (data.restaurants || []).map(r => {
+          const ratingNum = r.rating || 3;
+          const ratingDisplay = '\u2b50'.repeat(Math.min(5, Math.max(1, ratingNum))) + ` ${ratingNum}-star`;
+          const sustainabilityRating = r.organic ? 'Ultra-Low' : 'Medium';
+          const restaurantName = r.name || `Restaurant in ${r.city || r.country || 'Unknown'}`;
+          // Determine region based on country
+          let restaurantRegion = 'Other';
+          if (r.country) {
+            const countryLower = r.country.toLowerCase();
+            if (['thailand', 'vietnam', 'cambodia', 'laos', 'philippines', 'indonesia', 'malaysia', 'singapore', 'japan', 'south korea', 'korea', 'china', 'india', 'bangladesh', 'pakistan', 'sri lanka', 'nepal', 'myanmar', 'burma', 'mongolia', 'taiwan', 'hong kong'].includes(countryLower)) {
+              restaurantRegion = 'Asia';
+            } else if (['italy', 'france', 'spain', 'germany', 'united kingdom', 'portugal', 'greece', 'switzerland', 'austria', 'netherlands', 'belgium', 'czech republic', 'czechia', 'poland', 'sweden', 'norway', 'denmark', 'ireland', 'hungary', 'croatia', 'iceland', 'slovenia', 'romania'].includes(countryLower)) {
+              restaurantRegion = 'EU';
+            } else if (['united arab emirates', 'uae', 'saudi arabia', 'qatar', 'oman', 'jordan', 'lebanon', 'israel', 'turkey'].includes(countryLower)) {
+              restaurantRegion = 'Middle East';
+            } else if (['argentina', 'brazil', 'chile', 'colombia', 'ecuador', 'peru', 'venezuela', 'bolivia', 'paraguay', 'uruguay', 'guyana', 'suriname'].includes(countryLower)) {
+              restaurantRegion = 'South America';
+            } else if (['mexico', 'costa rica', 'panama', 'honduras', 'guatemala', 'el salvador', 'nicaragua', 'belize'].includes(countryLower)) {
+              restaurantRegion = 'Latin America';
+            } else if (['united states', 'canada', 'usa', 'us'].includes(countryLower)) {
+              restaurantRegion = 'US';
+            } else if (['australia', 'new zealand'].includes(countryLower)) {
+              restaurantRegion = 'Oceania';
+            } else if (['egypt', 'south africa', 'kenya', 'morocco', 'tanzania', 'uganda'].includes(countryLower)) {
+              restaurantRegion = 'Africa';
+            }
+          }
+          const restaurantObj = {
+            id: r.id,
+            name: restaurantName,
+            city: r.city,
+            country: r.country,
+            region: restaurantRegion,
+            cuisine: r.cuisine || 'Sustainable Cuisine',
+            certifications: r.organic ? ['Organic'] : r.certifications || [],
+            sustainability_rating: sustainabilityRating,
+            rating: ratingNum,
+            notes: `Sustainable restaurant \u2022 ${ratingDisplay} \u2022 ${r.cuisine || 'Eco-Friendly Dining'} \u2022 Sustainability: ${sustainabilityRating}`,
+            description: r.description || '',
+            // Create Google Maps booking link
+            affiliate_url: `https://www.google.com/maps/search/${encodeURIComponent(r.name || 'restaurant')}+${encodeURIComponent(r.city || r.country || '')}`,
+            lat: parseFloat(r.lat),
+            lon: parseFloat(r.lon),
+            amenities: r.amenities || []
+          };
+          console.log('Mapped restaurant:', restaurantObj);
+          return restaurantObj;
+        });
+        
+        console.log('Mapped API restaurants:', apiRestaurants);
+        console.log('First restaurant coords:', apiRestaurants[0]?.lat, apiRestaurants[0]?.lon);
+        
+        const localRestaurants = restaurants.filter(x => x.id && String(x.id).startsWith('local-'));
+        restaurants = [...apiRestaurants, ...localRestaurants];
+        allRestaurants = [...restaurants];  // update backup
+        console.log('Total restaurants after merge:', restaurants.length);
+        console.log('Restaurants before country filter:', restaurants.map(r => ({ name: r.name, country: r.country, region: r.region })));
+        
+        console.log('Restaurants to display:', restaurants.length);
+        console.log('Restaurants after country validation:', restaurants.length);
+        
+        // Apply filters to search results
+        let filteredResults = restaurants;
+        if(region || cuisine || cert || rating) {
+          filteredResults = restaurants.filter(r => {
+            if(region && r.region !== region) return false;
+            if(cuisine && r.cuisine !== cuisine) return false;
+            if(cert && !(r.certifications || []).includes(cert)) return false;
+            if(rating && r.rating && parseInt(r.rating) !== parseInt(rating)) return false;
+            return true;
+          });
+        }
+        
+        renderResults(filteredResults);
+        refreshMarkers();
+        
+        if(map && apiRestaurants.length > 0 && apiRestaurants[0].lat && apiRestaurants[0].lon) {
+          console.log('Centering map on:', apiRestaurants[0].lat, apiRestaurants[0].lon);
+          map.setView([apiRestaurants[0].lat, apiRestaurants[0].lon], 6);
+        } else if(map && restaurants.length > 0) {
+          const firstRestaurant = restaurants.find(r => r.lat && r.lon);
+          if(firstRestaurant) {
+            console.log('Centering map on first valid restaurant:', firstRestaurant.lat, firstRestaurant.lon);
+            map.setView([firstRestaurant.lat, firstRestaurant.lon], 6);
+          }
+        }
+      } catch(e) {
+        console.error('API search failed:', e);
+        alert('Could not search for destination. Error: ' + e.message);
+      }
+      return;
+    }
+
+    // Otherwise filter local results from allRestaurants
+    const filtered = allRestaurants.filter(r => {
+      if(region && r.region !== region) return false;
+      if(cuisine && r.cuisine !== cuisine) return false;
+      if(cert && !(r.certifications || []).includes(cert)) return false;
+      if(rating && r.rating && parseInt(r.rating) !== parseInt(rating)) return false;
+      return true;
+    });
+
+    console.log('Filtered results:', filtered);
+    restaurants = filtered;
+    renderResults(filtered);
+    refreshMarkers();
+    
+    // update markers visibility: simple approach - recenter to first
+    if(map && filtered.length>0 && filtered[0].lat && filtered[0].lon) map.setView([filtered[0].lat, filtered[0].lon], 4);
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    document.getElementById('regionFilter').value='';
+    document.getElementById('cuisineFilter').value='';
+    document.getElementById('certFilter').value='';
+    document.getElementById('ratingFilter').value='';
+    document.getElementById('query').value='';
+    restaurants = [...allRestaurants];
+    renderResults(restaurants);
+    refreshMarkers();
+    if(map) map.setView([20,0],2);
+  });
+
+  // submit restaurant (saves to localStorage)
+  const submitBtn = document.getElementById('submitRestaurant');
+  if(submitBtn) {
+    submitBtn.addEventListener('click', () => {
+      const name = document.getElementById('s_name').value.trim();
+      if(!name) return alert('Please enter restaurant name');
+      const r = {
+        id: 'local-' + Date.now(),
+        name,
+        country: document.getElementById('s_country').value.trim(),
+        region: document.getElementById('s_region').value,
+        cuisine: document.getElementById('s_cuisine').value.trim() || 'Sustainable Cuisine',
+        certifications: document.getElementById('s_cert').value.split(',').map(s=>s.trim()).filter(Boolean),
+        sustainability_rating: document.getElementById('s_sustainability').value.trim() || 'Medium',
+        features: (document.getElementById('s_notes').value||'').split(',').map(s=>s.trim()).filter(Boolean),
+        affiliate_url: document.getElementById('s_aff').value.trim() || '#',
+        notes: document.getElementById('s_notes').value.trim(),
+        lat: parseFloat(document.getElementById('s_lat').value) || null,
+        lon: parseFloat(document.getElementById('s_lon').value) || null
+      };
+
+      restaurants.push(r);
+      // persist local submissions only (we preserve sampleRestaurants separately)
+      const localOnly = restaurants.filter(x => x.id && x.id.startsWith('local-'));
+      localStorage.setItem('amicus_restaurants_v1', JSON.stringify(localOnly));
+      renderResults(restaurants);
+      refreshMarkers();
+      alert('Restaurant submitted (saved locally). You can Download JSON to export this list.');
+      // clear form
+      ['s_name','s_country','s_cuisine','s_cert','s_sustainability','s_aff','s_notes','s_lat','s_lon'].forEach(id=>{ if(document.getElementById(id)) document.getElementById(id).value=''; });
+    });
+  }
+
+  // download JSON (exports sample + local)
+  const downloadBtn = document.getElementById('downloadJson');
+  if(downloadBtn) {
+    downloadBtn.addEventListener('click', () => {
+      const data = JSON.stringify(restaurants, null, 2);
+      const blob = new Blob([data], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'amicus_restaurants_export.json';
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
+  }
+
+  // refresh markers and dataset on load
+  init();
+
+  // ---------- Notes for Reservation & OpenTable / Resy API & production ----------
+  /*
+    1) OpenTable & Resy partner APIs require registration and server-side integration:
+       - Get API keys from partner portal.
+       - Build a backend endpoint that queries the partner API and returns normalized restaurant records.
+       - Store partner keys on server (never in client JS).
+       - You can periodically sync partner data and merge into your dataset or serve live search results.
+
+    2) For paid listings / accept payments:
+       - Add PayPal Smart Buttons or Stripe Checkout on the submission or "promote listing" workflow.
+       - After successful payment, tag the submission as 'paid' in your DB.
+
+    3) Scaling search:
+       - Move dataset to a server-side DB and a search index (Algolia or Elasticsearch) for fast faceted search.
+
+    4) Verification:
+       - Provide an "Upload Sustainability Certification PDF" workflow (requires a backend to accept files). You can then manually verify and mark restaurants as 'verified'.
+
+    5) Map clustering:
+       - Use Leaflet.markercluster plugin for dense maps when you scale up.
+
+    6) Security:
+       - When moving to production, remove storing API credentials in client, enable HTTPS, and validate user uploads on server side.
+  */
+  </script>
+</body>
+</html>
