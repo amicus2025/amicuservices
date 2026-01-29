@@ -65,6 +65,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <!-- html2pdf (uses html2canvas + jsPDF) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- PayPal SDK -->
+  <script src="https://www.paypal.com/sdk/js?client-id=AQsh7wlez6Ba5FTkLYa2mtQDe1y55DPaM6hDh-mnJI3tz5WNYeG_UCfafHct6b2qGl5JpxZ3Jk6_xhKn&currency=USD"></script>
 </head>
 <body>
   <div class="wrap">
@@ -190,6 +192,7 @@
 
           <div style="display:flex;gap:10px;margin-top:10px;align-items:center">
             <button id="calcBtn" class="btn">Calculate Emissions</button>
+            <button id="guideBtn" class="btn" onclick="openCalculationGuide()">📖 Calculation Guide</button>
             <button id="resetBtn" class="btn ghost">Reset</button>
             <div style="margin-left:auto" class="muted">Emissions factors editable in script</div>
           </div>
@@ -214,7 +217,7 @@
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div>
               <div style="font-weight:700" id="hotelTitle">Results</div>
-              <div class="small">Snapshot — downloadable PDF, CSV, badge</div>
+              <div class="small" style="margin-top:4px">Full Report $50.00 — downloadable PDF, CSV, badge</div>
             </div>
             <div class="actions">
               <button id="downloadPdf" class="btn" title="Download PDF">PDF</button>
@@ -256,6 +259,26 @@
     <footer class="muted" style="margin-top:18px">
       Built with ❤️ — edit emissions factors in the script for your region. Use the badge fairly.
     </footer>
+
+    <!-- PayPal Modal for Calculation Guide -->
+    <div id="guidePaypalModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:10000;align-items:center;justify-content:center">
+      <div id="guidePaypalModalContent" style="background:white;padding:30px;border-radius:12px;max-width:500px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.3)">
+        <h3 style="margin:0 0 20px 0;color:#0ea5a4;font-size:22px">Access Calculation Guide - $5.00</h3>
+        <p style="margin:0 0 20px 0;color:#555">Complete payment of $5.00 to access the comprehensive data collection guide.</p>
+        <div id="guidePaypalButtonContainer"></div>
+        <button onclick="closeGuidePaypalModal()" style="margin-top:15px;background:#e5e7eb;color:#374151;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;width:100%">Cancel</button>
+      </div>
+    </div>
+
+    <!-- PayPal Modal for PDF Report -->
+    <div id="pdfPaypalModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:10000;align-items:center;justify-content:center">
+      <div id="pdfPaypalModalContent" style="background:white;padding:30px;border-radius:12px;max-width:500px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.3)">
+        <h3 style="margin:0 0 20px 0;color:#0ea5a4;font-size:22px">Download Full PDF Report</h3>
+        <p style="margin:0 0 20px 0;color:#555">Complete payment to download your comprehensive carbon footprint report.</p>
+        <div id="pdfPaypalButtonContainer"></div>
+        <button onclick="closePdfPaypalModal()" style="margin-top:15px;background:#e5e7eb;color:#374151;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;width:100%">Cancel</button>
+      </div>
+    </div>
   </div>
 
   <!-- Calculation engine -->
@@ -451,10 +474,144 @@
       document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     }
 
+    // Open Calculation Guide with PayPal payment
+    async function openCalculationGuide() {
+      try {
+        console.log('Opening calculation guide modal...');
+        
+        // Show PayPal modal
+        const modal = document.getElementById('guidePaypalModal');
+        if (!modal) {
+          console.error('Modal not found!');
+          return alert('Error: Payment modal not found');
+        }
+        modal.style.display = 'flex';
+        
+        // Clear any existing PayPal buttons
+        const container = document.getElementById('guidePaypalButtonContainer');
+        if (!container) {
+          console.error('Container not found!');
+          return alert('Error: Payment container not found');
+        }
+        container.innerHTML = '';
+        
+        // Check if PayPal SDK is loaded
+        if (typeof paypal === 'undefined') {
+          console.error('PayPal SDK not loaded!');
+          return alert('Error: PayPal SDK not loaded. Please refresh the page.');
+        }
+        
+        console.log('Rendering PayPal buttons...');
+        
+        // Render PayPal buttons
+        paypal.Buttons({
+          createOrder: function(data, actions) {
+            return actions.order.create({
+              purchase_units: [{
+                description: 'Hotel LCA Calculator - Data Collection Guide',
+                amount: {
+                  currency_code: 'USD',
+                  value: '5.00'
+                }
+              }]
+            });
+          },
+          onApprove: function(data, actions) {
+            return actions.order.capture().then(function(details) {
+              alert('Payment completed! Opening Calculation Guide...');
+              closeGuidePaypalModal();
+              window.open('lca-calculation-guide.html', '_blank');
+            });
+          },
+          onCancel: function(data) {
+            closeGuidePaypalModal();
+          },
+          onError: function(err) {
+            console.error('PayPal error:', err);
+            alert('Payment error: ' + err);
+            closeGuidePaypalModal();
+          }
+        }).render('#guidePaypalButtonContainer').catch(function(err) {
+          console.error('PayPal render error:', err);
+          alert('Failed to load payment buttons: ' + err);
+          closeGuidePaypalModal();
+        });
+      } catch (error) {
+        console.error('openCalculationGuide error:', error);
+        alert('Error opening calculation guide: ' + error.message);
+      }
+    }
+    
+    function closeGuidePaypalModal() {
+      document.getElementById('guidePaypalModal').style.display = 'none';
+    }
+
+    function closePdfPaypalModal() {
+      document.getElementById('pdfPaypalModal').style.display = 'none';
+    }
+
+    // Make functions globally accessible for onclick handlers
+    window.openCalculationGuide = openCalculationGuide;
+    window.closeGuidePaypalModal = closeGuidePaypalModal;
+    window.closePdfPaypalModal = closePdfPaypalModal;
+
     // PDF export (builds a rich node, embeds chart as image)
     async function downloadPdf(){
       const d = window.__latest_detail;
       if(!d) return alert("Run a calculation first.");
+
+      // Show PayPal modal
+      const modal = document.getElementById('pdfPaypalModal');
+      modal.style.display = 'flex';
+      
+      // Clear any existing PayPal buttons
+      const container = document.getElementById('pdfPaypalButtonContainer');
+      container.innerHTML = '';
+      
+      // Store resolve/reject for later use
+      let paymentResolve, paymentReject;
+      const paymentPromise = new Promise((resolve, reject) => {
+        paymentResolve = resolve;
+        paymentReject = reject;
+      });
+      
+      // Render PayPal buttons
+      paypal.Buttons({
+        createOrder: function(data, actions) {
+          return actions.order.create({
+            purchase_units: [{
+              description: 'Hotel LCA Full Report - ' + d.hotel_name,
+              amount: {
+                currency_code: 'USD',
+                value: '15.00'
+              }
+            }]
+          });
+        },
+        onApprove: function(data, actions) {
+          return actions.order.capture().then(function(details) {
+            alert('Payment completed! Generating your PDF...');
+            closePdfPaypalModal();
+            paymentResolve();
+          });
+        },
+        onCancel: function(data) {
+          closePdfPaypalModal();
+          paymentReject('Payment cancelled');
+        },
+        onError: function(err) {
+          alert('Payment error: ' + err);
+          closePdfPaypalModal();
+          paymentReject('Payment error');
+        }
+      }).render('#pdfPaypalButtonContainer');
+      
+      // Wait for payment
+      try {
+        await paymentPromise;
+      } catch (error) {
+        return;
+      }
 
       // Convert chart canvas to image with higher resolution
       let chartImg = "";
@@ -491,7 +648,7 @@
         <div style="display:flex;justify-content:space-between;font-size:13px;color:#64748b;margin-bottom:20px">
           <div>
             <span style="font-weight:600">Generated:</span> ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}<br/>
-            <span style="font-weight:600">Report By:</span> AmicuServices LLC 2026
+            AmicuServices LLC 2026
           </div>
           <div style="text-align:right">
             <span style="font-weight:600">Tool:</span> Hotel LCA Calculator v1.0

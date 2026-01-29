@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LCA Calculator - Data Collection Guide</title>
+  <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700,800,900" rel="stylesheet">
+  <link rel="stylesheet" href="css/open-iconic-bootstrap.min.css">
+  <link rel="stylesheet" href="css/animate.css">
+  <link rel="stylesheet" href="css/owl.carousel.min.css">
+  <link rel="stylesheet" href="css/owl.theme.default.min.css">
+  <link rel="stylesheet" href="css/magnific-popup.css">
+  <link rel="stylesheet" href="css/aos.css">
+  <link rel="stylesheet" href="css/ionicons.min.css">
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/flaticon.css">
+  <link rel="stylesheet" href="css/icomoon.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { 
+      font-family: 'Poppins', sans-serif; 
+      line-height: 1.8;
+      color: #333;
+      background: #f8f9fa;
+    }
+    .guide-container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 40px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+    }
+    .guide-header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 30px;
+      border-bottom: 3px solid #0ea5a4;
+    }
+    .guide-header h1 {
+      color: #0ea5a4;
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .guide-header p {
+      color: #666;
+      font-size: 16px;
+    }
+    .section {
+      margin-bottom: 40px;
+    }
+    .section h2 {
+      color: #0ea5a4;
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e9ecef;
+    }
+    .field-group {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #0ea5a4;
+    }
+    .field-name {
+      font-weight: 600;
+      color: #0ea5a4;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    .field-description {
+      color: #555;
+      margin-bottom: 10px;
+    }
+    .field-example {
+      background: white;
+      padding: 12px;
+      border-radius: 6px;
+      font-style: italic;
+      color: #666;
+      border-left: 3px solid #06b6d4;
+    }
+    .field-example strong {
+      color: #0ea5a4;
+      font-style: normal;
+    }
+    .tip-box {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 20px 0;
+    }
+    .tip-box strong {
+      color: #856404;
+    }
+    .print-button {
+      background: #0ea5a4;
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      display: block;
+      margin: 30px auto;
+      transition: background 0.3s;
+    }
+    .print-button:hover {
+      background: #0c8a89;
+    }
+    @media print {
+      body { background: white; }
+      .guide-container { box-shadow: none; margin: 0; padding: 20px; }
+      .print-button { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="guide-container">
+    <div class="guide-header">
+      <h1>LCA Calculator - Data Collection Guide</h1>
+      <p>Complete reference for collecting accurate carbon footprint data</p>
+    </div>
+
+    <div class="section">
+      <h2>Basic Information</h2>
+      
+      <div class="field-group">
+        <div class="field-name">Hotel Name</div>
+        <div class="field-description">The official name of your hotel property.</div>
+        <div class="field-example"><strong>Example:</strong> Grand Plaza Hotel & Suites</div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-name">Region</div>
+        <div class="field-description">Geographic location of your hotel. This affects electricity emission factors used in calculations.</div>
+        <div class="field-example"><strong>Options:</strong> US, EU, Asia Pacific, Latin America, Middle East, Africa</div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-name">Annual Room Nights</div>
+        <div class="field-description">Total number of rooms occupied per year. Calculate by multiplying: Number of Rooms × Average Occupancy Rate × 365 days</div>
+        <div class="field-example"><strong>Example:</strong> 100 rooms × 75% occupancy × 365 days = 27,375 room nights</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Scope 1: Direct Emissions</h2>
+      <p style="color: #666; margin-bottom: 20px;">Emissions from sources you directly control (heating, vehicles, generators).</p>
+
+      <div class="field-group">
+        <div class="field-name">Natural Gas (m³)</div>
+        <div class="field-description">Annual natural gas consumption for heating, hot water, and cooking. Check utility bills or meter readings.</div>
+        <div class="field-example"><strong>Example:</strong> 50,000 m³/year for a 150-room hotel with restaurant</div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-name">Diesel (liters)</div>
+        <div class="field-description">Diesel fuel used for backup generators, heating systems, or hotel vehicles. Include all diesel purchases.</div>
+        <div class="field-example"><strong>Example:</strong> 5,000 liters/year for backup power and shuttle van</div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-name">Gasoline (liters)</div>
+        <div class="field-description">Gasoline for hotel vehicles, lawn equipment, or small generators.</div>
+        <div class="field-example"><strong>Example:</strong> 3,000 liters/year for guest shuttles and maintenance vehicles</div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-name">Refrigerants (kg CO₂e)</div>
+        <div class="field-description">Emissions from refrigerant leakage in HVAC systems and refrigeration. Your HVAC technician can provide annual leakage data in CO₂e.</div>
+        <div class="field-example"><strong>Example:</strong> 500 kg CO₂e/year for a property with central air conditioning</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Scope 2: Indirect Energy Emissions</h2>
+      <p style="color: #666; margin-bottom: 20px;">Emissions from purchased electricity you consume.</p>
+
+      <div class="field-group">
+        <div class="field-name">Electricity (kWh)</div>
+        <div class="field-description">Total annual electricity consumption. Sum all monthly utility bills for the year. Include lighting, HVAC, elevators, kitchen equipment, and guest rooms.</div>
+        <div class="field-example"><strong>Example:</strong> 500,000 kWh/year for a 100-room hotel with restaurant and pool</div>
+      </div>
+
+      <div class="tip-box">
+        <strong>💡 Tip:</strong> If you have solar panels, only enter the net electricity purchased from the grid. Solar generation that you use directly doesn't count as purchased electricity.
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Scope 3: Other Indirect Emissions</h2>
+      <p style="color: #666; margin-bottom: 20px;">Emissions from waste disposal and water treatment in your supply chain.</p>
+
+      <div class="field-group">
+        <div class="field-name">Waste Sent to Landfill (kg)</div>
+        <div class="field-description">Annual weight of solid waste sent to landfills. Check invoices from waste haulers or weigh a typical week and multiply by 52.</div>
+        <div class="field-example"><strong>Example:</strong> 25,000 kg/year (approximately 500 kg/week for a mid-size hotel)</div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-name">Recycling (kg)</div>
+        <div class="field-description">Annual weight of materials recycled (paper, cardboard, glass, plastic, metal). Recycling has lower emissions than landfill.</div>
+        <div class="field-example"><strong>Example:</strong> 8,000 kg/year if recycling 30% of waste stream</div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-name">Composting (kg)</div>
+        <div class="field-description">Annual weight of organic waste composted (food scraps, yard waste). Composting has the lowest emissions of waste options.</div>
+        <div class="field-example"><strong>Example:</strong> 5,000 kg/year for hotels with food waste diversion programs</div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-name">Water Consumption (m³)</div>
+        <div class="field-description">Total annual water use including guest rooms, laundry, kitchen, landscaping, and pools. Check water utility bills.</div>
+        <div class="field-example"><strong>Example:</strong> 15,000 m³/year (approximately 40 m³/day for a 100-room hotel)</div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-name">Wastewater (m³)</div>
+        <div class="field-description">Volume of wastewater sent to treatment facilities. Typically 80-90% of water consumption.</div>
+        <div class="field-example"><strong>Example:</strong> 13,000 m³/year (approximately 87% of water consumption)</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Data Collection Tips</h2>
+      
+      <div class="tip-box">
+        <strong>📋 Where to Find Your Data:</strong>
+        <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+          <li><strong>Utility Bills:</strong> Electricity, natural gas, water (usually monthly)</li>
+          <li><strong>Fuel Receipts:</strong> Diesel, gasoline purchases</li>
+          <li><strong>Waste Invoices:</strong> Hauler invoices show weight of waste/recycling</li>
+          <li><strong>HVAC Service Records:</strong> Refrigerant refill amounts</li>
+          <li><strong>Building Management System:</strong> Real-time energy monitoring</li>
+        </ul>
+      </div>
+
+      <div class="tip-box" style="background: #d1ecf1; border-left-color: #0c5460;">
+        <strong style="color: #0c5460;">✅ Accuracy Matters:</strong> The more accurate your data, the better your carbon footprint report will be. If exact data isn't available, conservative estimates are better than leaving fields blank.
+      </div>
+    </div>
+
+    <button class="print-button" onclick="window.print()">🖨️ Print This Guide</button>
+
+  </div>
+</body>
+</html>
