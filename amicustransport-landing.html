@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AmicusTransport - Low-Carbon Airport Journeys</title>
+    <link href="https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700,800,900" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Cormorant+Garamond:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/flaticon.css">
+    <link rel="stylesheet" href="css/ionicons.min.css">
+    <style>
+        .ftco-section {
+            margin-top: 96px;
+        }
+        .ftco_navbar {
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            transition: transform 0.3s ease-out;
+            background-color: white !important;
+        }
+        .ftco_navbar.hidden-navbar {
+            transform: translateY(-100%);
+        }
+        .hero-transport {
+            background: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('images/destination-5.jpg');
+            background-size: cover;
+            background-position: center;
+            padding: 140px 0 80px;
+            color: #fff;
+        }
+        .hero-transport h1 {
+            margin-top: 1in;
+        }
+        .card-shadow {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border: 0;
+        }
+        .metric-pill {
+            display: inline-block;
+            background: #0ea5a4;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light site-navbar-target" id="ftco-navbar">
+        <div class="container">
+            <div class="w-100 text-center">
+                <h1 class="navbar-brand d-inline-block mb-3" style="font-size: 2rem; font-weight: 600; padding-bottom: 12px; background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 10%22 preserveAspectRatio=%22none%22><path d=%22M 0 5 Q 25 0 50 5 T 100 5%22 stroke=%22black%22 stroke-width=%222%22 fill=%22none%22/></svg>'); background-position: bottom; background-repeat: repeat-x; background-size: 100px 8px;"><a href="index.html" style="color: inherit; text-decoration: none;">AmicusTransport</a></h1>
+                <div style="width: 200px; height: 4px; background: linear-gradient(to right, transparent, #ccc, transparent); margin-bottom: 20px; margin-left: 0;"></div>
+                <button class="navbar-toggler js-fh5co-nav-toggle fh5co-nav-toggle" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="oi oi-menu"></span> Menu
+                </button>
+
+                <div class="collapse navbar-collapse" id="ftco-nav">
+                    <ul class="navbar-nav nav">
+                        <li class="nav-item"><a href="index.html#about-section" class="nav-link"><span>About</span></a></li>
+                        <li class="nav-item"><a href="index.html#services-section" class="nav-link"><span>Services</span></a></li>
+                        <li class="nav-item"><a href="index.html#destination-section" class="nav-link"><span>Destination</span></a></li>
+                        <li class="nav-item"><a href="index.html#hotel-section" class="nav-link"><span>Hotels+Resorts+Villas</span></a></li>
+                        <li class="nav-item"><a href="index.html#restaurant-section" class="nav-link"><span>Sip+Sizzle</span></a></li>
+                        <li class="nav-item"><a href="index.html#blog-section" class="nav-link"><span>ZeroNet</span></a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero-transport">
+        <div class="container">
+            <div class="row justify-content-center text-center">
+                <div class="col-lg-9">
+                    <span class="subheading">Low-Carbon Airport Journeys</span>
+                    <h1 class="mb-3" style="color:#fff;">Estimate Your Flight Emissions and Cut Them at the Airport</h1>
+                    <p class="lead">AmicusTransport helps travelers and airports estimate passenger journey emissions and make decisions to lower-carbon impacts while traveling.</p>
+                    <a href="#estimator" class="btn btn-primary px-4 py-3">For Passenger</a>
+                    <a href="amicusairports-landing.html" class="btn btn-primary px-4 py-3 ml-2">For Airports</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="ftco-section" id="estimator">
+        <div class="container">
+            <div class="row justify-content-center mb-4">
+                <div class="col-lg-8 text-center">
+                    <span class="subheading">Trip Emissions Estimator</span>
+                    <h2 class="mb-3">Passenger Journey Calculator</h2>
+                    <p>Get a CO2e estimate for your flight and see the best next steps to reduce your impact.</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-7 mb-4">
+                    <div class="card card-shadow p-4">
+                        <form id="emissionsForm">
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="fromAirport">Departure Airport (IATA)</label>
+                                    <input type="text" class="form-control" id="fromAirport" placeholder="JFK" maxlength="3">
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="toAirport">Arrival Airport (IATA)</label>
+                                    <input type="text" class="form-control" id="toAirport" placeholder="LAX" maxlength="3">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="distanceKm">Flight Distance (km)</label>
+                                    <input type="number" class="form-control" id="distanceKm" placeholder="3980" min="100" step="10" required>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="cabinClass">Cabin Class</label>
+                                    <select id="cabinClass" class="form-control">
+                                        <option value="1">Economy</option>
+                                        <option value="1.3">Premium Economy</option>
+                                        <option value="1.8">Business</option>
+                                        <option value="2.4">First</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="tripType">Trip Type</label>
+                                    <select id="tripType" class="form-control">
+                                        <option value="1">One-way</option>
+                                        <option value="2">Round-trip</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="passengers">Passengers</label>
+                                    <input type="number" class="form-control" id="passengers" value="1" min="1" step="1">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="includeNonCo2" checked>
+                                    <label class="form-check-label" for="includeNonCo2">Include non-CO2 effects (radiative forcing)</label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Estimate Emissions</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-lg-5 mb-4">
+                    <div class="card card-shadow p-4">
+                        <h4 class="mb-3">Estimated Emissions</h4>
+                        <p class="mb-2">Total trip impact:</p>
+                        <div class="mb-3">
+                            <span class="metric-pill" id="emissionsValue">kg CO2e</span>
+                        </div>
+                        <p class="small text-muted">This estimate uses distance-based emissions factors and cabin class multipliers.</p>
+                        <div class="mt-4">
+                            <h5 class="mb-2">Quick Impact Reducers</h5>
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-2">✓ Choose rail or electric shuttles from the airport</li>
+                                <li class="mb-2">✓ Share rides or use public transit for the last mile</li>
+                                <li class="mb-2">✓ Book hotels with verified sustainability standards</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="ftco-section" style="padding-top: 0.5in;">
+        <div class="container">
+            <div class="row justify-content-center mb-4">
+                <div class="col-lg-8 text-center">
+                    <span class="subheading">Lower-Carbon Connections</span>
+                    <h2 class="mb-3">Nearby Airport Ground Transport</h2>
+                    <p>We prioritize options that reduce tailpipe emissions and maximize shared capacity.</p>
+                </div>
+            </div>
+            <div class="row" id="transportOptions">
+                <div class="col-md-4 mb-4">
+                    <div class="services text-center p-4 card-shadow">
+                        <div class="icon d-flex justify-content-center align-items-center mb-3"><span class="ion-ios-train"></span></div>
+                        <h4 class="mb-2">Rail + Metro</h4>
+                        <p>Use airport rail links and metro lines for the lowest per-passenger emissions.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="services text-center p-4 card-shadow">
+                        <div class="icon d-flex justify-content-center align-items-center mb-3"><span class="ion-ios-bus"></span></div>
+                        <h4 class="mb-2">Electric Shuttles</h4>
+                        <p>Shared electric shuttles or coaches reduce emissions and congestion.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="services text-center p-4 card-shadow">
+                        <div class="icon d-flex justify-content-center align-items-center mb-3"><span class="ion-ios-car"></span></div>
+                        <h4 class="mb-2">EV Ride Share</h4>
+                        <p>Opt for electric or hybrid ride share with pooled trips where possible.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="ftco-section bg-light">
+        <div class="container">
+            <div class="row justify-content-center mb-4">
+                <div class="col-lg-8 text-center">
+                    <span class="subheading">Stay Sustainably</span>
+                    <h2 class="mb-3">Hotels with Verified Sustainability</h2>
+                    <p>Reduce your travel footprint further by booking low-carbon, LEED-certified stays.</p>
+                    <a href="sustainable-hotel-search.html" class="btn btn-primary px-4 py-3">Find Sustainable Hotels</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <footer class="ftco-footer-section">
+        <div class="container">
+            <div class="row mb-5">
+                <div class="col-md-4"></div>
+                <div class="col-md-4">
+                    <h4 class="mb-4">Quick Links</h4>
+                    <ul class="list-unstyled">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="index.html#services-section">Services</a></li>
+                        <li><a href="amicustransport-landing.html">Airport Transport</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h4 class="mb-4">Contact</h4>
+                    <p>Email: amicuservices@gmail.com</p>
+                    <p>Phone: (555) 000-0001</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12 text-center">
+                    <p>&copy; 2026 AmicuServices. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        var lastScrollTop = 0;
+        var navbar = $('.ftco_navbar');
+        $(window).on('scroll', function() {
+            var scrollTop = $(window).scrollTop();
+            if (scrollTop > lastScrollTop) {
+                navbar.addClass('hidden-navbar');
+            } else {
+                navbar.removeClass('hidden-navbar');
+            }
+            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+        });
+
+        var airportTransportMap = {
+            JFK: [
+                { icon: 'ion-ios-train', title: 'AirTrain + Subway', desc: 'Connect to NYC Subway for lower-impact transfers.' },
+                { icon: 'ion-ios-bus', title: 'Electric Shuttle', desc: 'Shared shuttle services reduce per-passenger emissions.' },
+                { icon: 'ion-ios-car', title: 'EV Ride Share', desc: 'Book electric or hybrid ride options to Manhattan.' }
+            ],
+            LAX: [
+                { icon: 'ion-ios-bus', title: 'Metro Connector Shuttle', desc: 'Transfer to metro lines via airport connector services.' },
+                { icon: 'ion-ios-car', title: 'EV Ride Share', desc: 'Request an EV for a cleaner ride to the city.' },
+                { icon: 'ion-ios-train', title: 'Light Rail Link', desc: 'Use rail connections for a lower-carbon trip.' }
+            ],
+            LHR: [
+                { icon: 'ion-ios-train', title: 'Elizabeth Line', desc: 'Fast rail service to central London with lower emissions.' },
+                { icon: 'ion-ios-bus', title: 'Coach Services', desc: 'Shared coach options reduce per-passenger impact.' },
+                { icon: 'ion-ios-car', title: 'EV Taxi', desc: 'Choose licensed electric taxis when available.' }
+            ],
+            CDG: [
+                { icon: 'ion-ios-train', title: 'RER B Train', desc: 'Direct rail service into Paris with low emissions.' },
+                { icon: 'ion-ios-bus', title: 'Airport Coach', desc: 'Shared coach services to major hubs.' },
+                { icon: 'ion-ios-car', title: 'EV Ride Share', desc: 'Request electric vehicle options where available.' }
+            ]
+        };
+
+        function renderTransportOptions(airportCode) {
+            var list = airportTransportMap[airportCode] || [
+                { icon: 'ion-ios-train', title: 'Rail + Metro', desc: 'Use airport rail links and metro lines for the lowest per-passenger emissions.' },
+                { icon: 'ion-ios-bus', title: 'Electric Shuttles', desc: 'Shared electric shuttles or coaches reduce emissions and congestion.' },
+                { icon: 'ion-ios-car', title: 'EV Ride Share', desc: 'Opt for electric or hybrid ride share with pooled trips where possible.' }
+            ];
+
+            var container = document.getElementById('transportOptions');
+            container.innerHTML = list.map(function(item) {
+                return (
+                    '<div class="col-md-4 mb-4">' +
+                        '<div class="services text-center p-4 card-shadow">' +
+                            '<div class="icon d-flex justify-content-center align-items-center mb-3"><span class="' + item.icon + '"></span></div>' +
+                            '<h4 class="mb-2">' + item.title + '</h4>' +
+                            '<p>' + item.desc + '</p>' +
+                        '</div>' +
+                    '</div>'
+                );
+            }).join('');
+        }
+
+        function calculateEmissions() {
+            var distance = parseFloat(document.getElementById('distanceKm').value || 0);
+            var cabinMultiplier = parseFloat(document.getElementById('cabinClass').value);
+            var tripMultiplier = parseFloat(document.getElementById('tripType').value);
+            var passengers = parseInt(document.getElementById('passengers').value || 1, 10);
+            var includeNonCo2 = document.getElementById('includeNonCo2').checked;
+
+            var factor;
+            if (distance < 1500) {
+                factor = 0.255;
+            } else if (distance < 3500) {
+                factor = 0.195;
+            } else {
+                factor = 0.150;
+            }
+
+            var baseKg = distance * factor;
+            var nonCo2Multiplier = includeNonCo2 ? 1.9 : 1;
+            var total = baseKg * cabinMultiplier * tripMultiplier * passengers * nonCo2Multiplier;
+
+            document.getElementById('emissionsValue').textContent = total.toFixed(0) + ' kg CO2e';
+        }
+
+        document.getElementById('emissionsForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            calculateEmissions();
+            var arrival = (document.getElementById('toAirport').value || '').toUpperCase();
+            renderTransportOptions(arrival);
+        });
+    </script>
+</body>
+</html>
