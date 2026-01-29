@@ -162,6 +162,32 @@ body{margin:0;background:var(--bg);color:#0f172a}
     return [];
   }
 
+  // ---------- Sample hotel data ----------
+  function getSampleHotels() {
+    return [
+      {id:'h1', name:'Green Valley Resort', city:'San Francisco', country:'USA', region:'US', lat:37.7749, lon:-122.4194, stars:4, certifications:['LEED','Green Key'], co2_rating:'Ultra-Low', description:'Eco-luxury resort with solar power', amenities:['Solar','EV Charging','Organic Food']},
+      {id:'h2', name:'Eco Garden Hotel', city:'Portland', country:'USA', region:'US', lat:45.5152, lon:-122.6784, stars:3, certifications:['Green Key'], co2_rating:'Low', description:'Sustainable boutique hotel', amenities:['Recycling','LED Lighting']},
+      {id:'h3', name:'Sustainable Inn', city:'Seattle', country:'USA', region:'US', lat:47.6062, lon:-122.3321, stars:3, certifications:['LEED'], co2_rating:'Low', description:'Downtown eco-friendly lodging', amenities:['Solar','Bike Rental']},
+      {id:'h4', name:'Planet-Friendly Lodge', city:'Los Angeles', country:'USA', region:'US', lat:34.0522, lon:-118.2437, stars:4, certifications:['Green Key','EarthCheck'], co2_rating:'Medium', description:'Modern sustainable hotel', amenities:['EV Charging','Water Conservation']},
+      {id:'h5', name:'Nature\'s Haven', city:'Denver', country:'USA', region:'US', lat:39.7392, lon:-104.9903, stars:3, certifications:['Green Key'], co2_rating:'Low', description:'Mountain retreat with eco focus', amenities:['Solar','Composting']},
+      {id:'h6', name:'Verdant Hotel', city:'Austin', country:'USA', region:'US', lat:30.2672, lon:-97.7431, stars:4, certifications:['LEED'], co2_rating:'Ultra-Low', description:'Carbon-neutral city hotel', amenities:['Solar','EV Charging','Organic Food']},
+      {id:'h7', name:'Green Earth Inn', city:'New York', country:'USA', region:'US', lat:40.7128, lon:-74.0060, stars:4, certifications:['LEED','Green Key'], co2_rating:'Medium', description:'Urban sustainable accommodation', amenities:['LED Lighting','Recycling']},
+      {id:'h8', name:'Eco Paradise Resort', city:'Miami', country:'USA', region:'US', lat:25.7617, lon:-80.1918, stars:5, certifications:['Green Key','EarthCheck'], co2_rating:'Low', description:'Beachfront eco resort', amenities:['Solar','Water Conservation','Organic Food']},
+      {id:'h9', name:'Sustainable Stay', city:'Chicago', country:'USA', region:'US', lat:41.8781, lon:-87.6298, stars:3, certifications:['Green Key'], co2_rating:'Medium', description:'Green hotel in the city', amenities:['Recycling','LED Lighting']},
+      {id:'h10', name:'Planet Hotel', city:'Boston', country:'USA', region:'US', lat:42.3601, lon:-71.0589, stars:4, certifications:['LEED'], co2_rating:'Low', description:'Historic eco-renovated building', amenities:['Solar','EV Charging']},
+      {id:'h11', name:'Green Haven Hotel', city:'Paris', country:'France', region:'EU', lat:48.8566, lon:2.3522, stars:4, certifications:['EU Ecolabel','Green Key'], co2_rating:'Low', description:'Parisian eco-chic hotel', amenities:['Solar','Bike Rental','Organic Food']},
+      {id:'h12', name:'Eco Barcelona', city:'Barcelona', country:'Spain', region:'EU', lat:41.3851, lon:2.1734, stars:3, certifications:['Green Key'], co2_rating:'Medium', description:'Mediterranean sustainable inn', amenities:['Solar','Recycling']},
+      {id:'h13', name:'Green Rome Lodge', city:'Rome', country:'Italy', region:'EU', lat:41.9028, lon:12.4964, stars:4, certifications:['EU Ecolabel'], co2_rating:'Low', description:'Historic center eco hotel', amenities:['LED Lighting','Water Conservation']},
+      {id:'h14', name:'Sustainability Berlin', city:'Berlin', country:'Germany', region:'EU', lat:52.5200, lon:13.4050, stars:3, certifications:['EU Ecolabel','Green Key'], co2_rating:'Ultra-Low', description:'Carbon-neutral accommodation', amenities:['Solar','EV Charging']},
+      {id:'h15', name:'Eco Amsterdam', city:'Amsterdam', country:'Netherlands', region:'EU', lat:52.3676, lon:4.9041, stars:4, certifications:['Green Key'], co2_rating:'Low', description:'Canal-side green hotel', amenities:['Bike Rental','Organic Food']},
+      {id:'h16', name:'Green Tokyo Inn', city:'Tokyo', country:'Japan', region:'Asia', lat:35.6762, lon:139.6503, stars:4, certifications:['Green Key','EarthCheck'], co2_rating:'Medium', description:'Modern Japanese eco hotel', amenities:['LED Lighting','Recycling']},
+      {id:'h17', name:'Sustainable Bangkok', city:'Bangkok', country:'Thailand', region:'Asia', lat:13.7563, lon:100.5018, stars:3, certifications:['Green Key'], co2_rating:'Low', description:'Tropical eco resort', amenities:['Solar','Water Conservation']},
+      {id:'h18', name:'Earth Hotel Singapore', city:'Singapore', country:'Singapore', region:'Asia', lat:1.3521, lon:103.8198, stars:5, certifications:['Green Mark','EarthCheck'], co2_rating:'Ultra-Low', description:'Award-winning green building', amenities:['Solar','EV Charging','Organic Food']},
+      {id:'h19', name:'Eco Sydney', city:'Sydney', country:'Australia', region:'Oceania', lat:-33.8688, lon:151.2093, stars:4, certifications:['Green Key'], co2_rating:'Low', description:'Harbor-view sustainable hotel', amenities:['Solar','Recycling']},
+      {id:'h20', name:'Green Auckland Lodge', city:'Auckland', country:'New Zealand', region:'Oceania', lat:-36.8485, lon:174.7633, stars:3, certifications:['Qualmark Enviro'], co2_rating:'Low', description:'Kiwi eco hospitality', amenities:['Solar','Composting','Organic Food']}
+    ];
+  }
+
   // ---------- App state ----------
   let hotels = [];          // combined dataset (sample + local)
   let allHotels = [];       // store all loaded hotels for filtering
@@ -313,74 +339,55 @@ body{margin:0;background:var(--bg);color:#0f172a}
 
     console.log('Search clicked with query:', q);
 
-    // If query is entered (destination), fetch from API
+    // If query is entered (destination), use sample data
     if(q) {
       try {
-        console.log('Fetching from API for destination:', q);
+        console.log('Searching sample data for destination:', q);
         // Clear previous results before fetching new ones
         hotels = [];
         allHotels = [];
         renderResults([]);
         markersLayer.clearLayers();
         
-        const res = await fetch(`http://localhost:5000/api/hotels/search?city=${encodeURIComponent(q)}&country=`);
-        console.log('API response status:', res.status);
+        // Get sample hotels and filter by search query
+        const sampleData = getSampleHotels();
+        const queryLower = q.toLowerCase();
         
-        if(!res.ok) {
-          throw new Error(`API returned status ${res.status}`);
-        }
+        // Filter hotels by city, country, or region
+        const filteredHotels = sampleData.filter(hotel => {
+          return (hotel.city && hotel.city.toLowerCase().includes(queryLower)) ||
+                 (hotel.country && hotel.country.toLowerCase().includes(queryLower)) ||
+                 (hotel.region && hotel.region.toLowerCase().includes(queryLower)) ||
+                 (hotel.name && hotel.name.toLowerCase().includes(queryLower));
+        });
         
-        const data = await res.json();
-        console.log('API returned data:', data);
-        console.log('API hotels:', data.hotels);
-        if(data.hotels && data.hotels.length > 0) {
-          console.log('First API hotel:', data.hotels[0]);
-        }
+        console.log('Filtered hotels:', filteredHotels);
         
-        if(!data.hotels || data.hotels.length === 0) {
+        if(filteredHotels.length === 0) {
           alert('No hotels found for "' + q + '". Try a different destination.');
           return;
         }
-        const apiHotels = (data.hotels || []).map(h => {
+        
+        // Map filtered hotels to the expected format
+        const apiHotels = filteredHotels.map(h => {
           const starsNum = h.stars || 3;
           const starsDisplay = '\u2b50'.repeat(Math.min(5, Math.max(1, starsNum))) + ` ${starsNum}-star`;
-          const co2Rating = h.leed ? 'Ultra-Low' : 'Medium';
+          const co2Rating = h.leed ? 'Ultra-Low' : h.co2_rating || 'Medium';
           const hotelName = h.name || `Hotel in ${h.city || h.country || 'Unknown'}`;
-          // Determine region based on country
-          let hotelRegion = 'Other';
-          if (h.country) {
-            const countryLower = h.country.toLowerCase();
-            if (['thailand', 'vietnam', 'cambodia', 'laos', 'philippines', 'indonesia', 'malaysia', 'singapore', 'japan', 'south korea', 'korea', 'china', 'india', 'bangladesh', 'pakistan', 'sri lanka', 'nepal', 'myanmar', 'burma', 'mongolia', 'taiwan', 'hong kong'].includes(countryLower)) {
-              hotelRegion = 'Asia';
-            } else if (['italy', 'france', 'spain', 'germany', 'united kingdom', 'portugal', 'greece', 'switzerland', 'austria', 'netherlands', 'belgium', 'czech republic', 'czechia', 'poland', 'sweden', 'norway', 'denmark', 'ireland', 'hungary', 'croatia', 'iceland', 'slovenia', 'romania'].includes(countryLower)) {
-              hotelRegion = 'EU';
-            } else if (['united arab emirates', 'uae', 'saudi arabia', 'qatar', 'oman', 'jordan', 'lebanon', 'israel', 'turkey'].includes(countryLower)) {
-              hotelRegion = 'Middle East';
-            } else if (['argentina', 'brazil', 'chile', 'colombia', 'ecuador', 'peru', 'venezuela', 'bolivia', 'paraguay', 'uruguay', 'guyana', 'suriname'].includes(countryLower)) {
-              hotelRegion = 'South America';
-            } else if (['mexico', 'costa rica', 'panama', 'honduras', 'guatemala', 'el salvador', 'nicaragua', 'belize'].includes(countryLower)) {
-              hotelRegion = 'Latin America';
-            } else if (['united states', 'canada', 'usa', 'us'].includes(countryLower)) {
-              hotelRegion = 'US';
-            } else if (['australia', 'new zealand'].includes(countryLower)) {
-              hotelRegion = 'Oceania';
-            } else if (['egypt', 'south africa', 'kenya', 'morocco', 'tanzania', 'uganda'].includes(countryLower)) {
-              hotelRegion = 'Africa';
-            }
-          }
+          
           const hotelObj = {
             id: h.id,
             name: hotelName,
             city: h.city,
             country: h.country,
-            region: hotelRegion,
-            certifications: h.leed ? ['LEED'] : h.certifications || [],
+            region: h.region || 'Other',
+            certifications: h.certifications || [],
             co2_rating: co2Rating,
             stars: starsNum,
             notes: `Eco-friendly hotel \u2022 ${starsDisplay} \u2022 CO\u2082: ${co2Rating}`,
             description: h.description || '',
             // Create Google Maps booking link
-            affiliate_url: `https://www.google.com/maps/search/${encodeURIComponent(h.name || 'hotel')}+${encodeURIComponent(h.city || h.country || '')}`,
+            affiliate_url: h.affiliate_url || `https://www.google.com/maps/search/${encodeURIComponent(h.name || 'hotel')}+${encodeURIComponent(h.city || h.country || '')}`,
             lat: parseFloat(h.lat),
             lon: parseFloat(h.lon),
             amenities: h.amenities || []
