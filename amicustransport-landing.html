@@ -94,7 +94,7 @@
                 <div class="col-lg-8 text-center">
                     <span class="subheading">Trip Emissions Estimator</span>
                     <h2 class="mb-3">Passenger Journey Calculator</h2>
-                    <p>Get a CO2e estimate for your flight and see the best next steps to reduce your impact.</p>
+                    <p>Estimate your full passenger journey with flight emissions, ground transport, and a 3-night hotel stay.</p>
                 </div>
             </div>
             <div class="row">
@@ -139,6 +139,40 @@
                                     <input type="number" class="form-control" id="passengers" value="1" min="1" step="1">
                                 </div>
                             </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <div class="form-check" style="padding-top: 8px;">
+                                        <input class="form-check-input" type="checkbox" id="includeTransfer" checked>
+                                        <label class="form-check-label" for="includeTransfer">Include transfer flight</label>
+                                    </div>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="transferDistanceKm">Transfer Flight Distance (km)</label>
+                                    <input type="number" class="form-control" id="transferDistanceKm" value="600" min="0" step="10">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="groundDistanceKm">Ground Transport Distance (km)</label>
+                                    <input type="number" class="form-control" id="groundDistanceKm" value="30" min="1" step="1">
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="groundMode">Ground Transport Mode</label>
+                                    <select id="groundMode" class="form-control">
+                                        <option value="rideshare">Taxi / Uber / Lyft</option>
+                                        <option value="rideshareShared">Rideshare (Shared)</option>
+                                        <option value="rental">Rental Car</option>
+                                        <option value="bus">Bus</option>
+                                        <option value="train">Train</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="hotelNights">Hotel Stay (nights)</label>
+                                    <input type="number" class="form-control" id="hotelNights" value="3" min="1" step="1">
+                                </div>
+                            </div>
                             <div class="form-group">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="includeNonCo2" checked>
@@ -152,11 +186,16 @@
                 <div class="col-lg-5 mb-4">
                     <div class="card card-shadow p-4">
                         <h4 class="mb-3">Estimated Emissions</h4>
-                        <p class="mb-2">Total trip impact:</p>
+                        <p class="mb-2">Total estimated journey impact:</p>
                         <div class="mb-3">
-                            <span class="metric-pill" id="emissionsValue">kg CO2e</span>
+                            <span class="metric-pill" id="emissionsValue">1000 kg CO2e</span>
                         </div>
-                        <p class="small text-muted">This estimate uses distance-based emissions factors and cabin class multipliers.</p>
+                        <ul class="list-unstyled mb-3">
+                            <li class="mb-2">Flight Emissions: <span id="flightEmissions">kg CO2e</span></li>
+                            <li class="mb-2">Ground transport (to/from airport): <span id="groundEmissions">45 kg CO2e</span></li>
+                            <li class="mb-2">Hotel stay (nights): <span id="hotelEmissions">135 kg CO2e</span></li>
+                        </ul>
+                        <p class="small text-muted">Estimates are based on industry-average emissions factors and publicly available aviation, transport, and lodging data.</p>
                         <div class="mt-4">
                             <h5 class="mb-2">Quick Impact Reducers</h5>
                             <ul class="list-unstyled mb-0">
@@ -308,10 +347,15 @@
 
         function calculateEmissions() {
             var distance = parseFloat(document.getElementById('distanceKm').value || 0);
+            var transferDistance = parseFloat(document.getElementById('transferDistanceKm').value || 0);
+            var includeTransfer = document.getElementById('includeTransfer').checked;
             var cabinMultiplier = parseFloat(document.getElementById('cabinClass').value);
             var tripMultiplier = parseFloat(document.getElementById('tripType').value);
             var passengers = parseInt(document.getElementById('passengers').value || 1, 10);
             var includeNonCo2 = document.getElementById('includeNonCo2').checked;
+            var groundDistance = parseFloat(document.getElementById('groundDistanceKm').value || 0);
+            var groundMode = document.getElementById('groundMode').value;
+            var hotelNights = parseInt(document.getElementById('hotelNights').value || 0, 10);
 
             var factor;
             if (distance < 1500) {
@@ -322,11 +366,29 @@
                 factor = 0.150;
             }
 
-            var baseKg = distance * factor;
+            var totalAirDistance = distance + (includeTransfer ? transferDistance : 0);
+            var baseKg = totalAirDistance * factor;
             var nonCo2Multiplier = includeNonCo2 ? 1.9 : 1;
-            var total = baseKg * cabinMultiplier * tripMultiplier * passengers * nonCo2Multiplier;
+            var flightKg = baseKg * cabinMultiplier * tripMultiplier * passengers * nonCo2Multiplier;
+
+            var groundFactorMap = {
+                rideshare: 0.21,
+                rideshareShared: 0.14,
+                rental: 0.24,
+                bus: 0.09,
+                train: 0.04
+            };
+            var groundFactor = groundFactorMap[groundMode] || 0.21;
+            var groundTransportKg = groundDistance * groundFactor * tripMultiplier * passengers;
+            var hotelPerNightKg = 45;
+            var hotelStayKg = hotelNights * hotelPerNightKg * passengers;
+            var total = flightKg + groundTransportKg + hotelStayKg;
 
             document.getElementById('emissionsValue').textContent = total.toFixed(0) + ' kg CO2e';
+            document.getElementById('flightEmissions').textContent = flightKg.toFixed(0) + ' kg CO2e';
+            document.getElementById('groundEmissions').textContent = groundTransportKg.toFixed(0) + ' kg CO2e';
+            document.getElementById('hotelEmissions').textContent = hotelStayKg.toFixed(0) + ' kg CO2e';
+            document.getElementById('journeyTotal').textContent = (total / 1000).toFixed(1) + ' metric tons CO2e';
         }
 
         document.getElementById('emissionsForm').addEventListener('submit', function(event) {
