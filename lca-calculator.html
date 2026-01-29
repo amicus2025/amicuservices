@@ -193,6 +193,7 @@
           <div style="display:flex;gap:10px;margin-top:10px;align-items:center">
             <button id="calcBtn" class="btn">Calculate Emissions</button>
             <button id="guideBtn" class="btn" onclick="openCalculationGuide()">📖 Calculation Guide</button>
+            <button id="testBadgeBtn" class="btn ghost" onclick="openTestBadgePage()">Test Badge Here</button>
             <button id="resetBtn" class="btn ghost">Reset</button>
             <div style="margin-left:auto" class="muted">Emissions factors editable in script</div>
           </div>
@@ -217,7 +218,7 @@
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div>
               <div style="font-weight:700" id="hotelTitle">Results</div>
-              <div class="small" style="margin-top:4px">Full Report $50.00 — downloadable PDF, CSV, badge</div>
+              <div class="small" style="margin-top:4px">Full Report $20.00 — downloadable PDF, CSV, badge</div>
             </div>
             <div class="actions">
               <button id="downloadPdf" class="btn" title="Download PDF">PDF</button>
@@ -273,8 +274,8 @@
     <!-- PayPal Modal for PDF Report -->
     <div id="pdfPaypalModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:10000;align-items:center;justify-content:center">
       <div id="pdfPaypalModalContent" style="background:white;padding:30px;border-radius:12px;max-width:500px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.3)">
-        <h3 style="margin:0 0 20px 0;color:#0ea5a4;font-size:22px">Download Full PDF Report</h3>
-        <p style="margin:0 0 20px 0;color:#555">Complete payment to download your comprehensive carbon footprint report.</p>
+        <h3 style="margin:0 0 20px 0;color:#0ea5a4;font-size:22px">Download Full PDF Report - $20.00</h3>
+        <p style="margin:0 0 20px 0;color:#555">Complete payment of $20.00 to download your comprehensive carbon footprint report.</p>
         <div id="pdfPaypalButtonContainer"></div>
         <button onclick="closePdfPaypalModal()" style="margin-top:15px;background:#e5e7eb;color:#374151;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;width:100%">Cancel</button>
       </div>
@@ -555,6 +556,12 @@
     window.closeGuidePaypalModal = closeGuidePaypalModal;
     window.closePdfPaypalModal = closePdfPaypalModal;
 
+    // Open test badge page
+    function openTestBadgePage() {
+      window.open('test-badge.html', '_blank');
+    }
+    window.openTestBadgePage = openTestBadgePage;
+
     // PDF export (builds a rich node, embeds chart as image)
     async function downloadPdf(){
       const d = window.__latest_detail;
@@ -583,7 +590,7 @@
               description: 'Hotel LCA Full Report - ' + d.hotel_name,
               amount: {
                 currency_code: 'USD',
-                value: '15.00'
+                value: '20.00'
               }
             }]
           });
@@ -789,9 +796,13 @@
     function badgeHtmlCopy(){
       const d = window.__latest_detail;
       if(!d) return alert("Run a calculation first.");
-      const html = `<div style="display:inline-block;padding:8px 12px;border-radius:8px;background:#e6fffa;border:1px solid #ccfbf1;font-family:Inter,-apple-system,Segoe UI,Roboto;margin:4px">
-  <strong style="color:#0f172a">${escapeHtml(d.hotel_name)}</strong><br/>
-  <small style="color:#0f766e">CO₂e per room-night: ${d.breakdown_kg.per_room_night} kg</small>
+      const html = `<div style="display:inline-flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);border:2px solid #d97706;font-family:Inter,-apple-system,Segoe UI,Roboto;margin:4px;box-shadow:0 4px 12px rgba(217,119,6,0.25)">
+  <div style="font-size:32px;line-height:1">♻️</div>
+  <div>
+    <strong style="color:#78350f;display:block;font-size:15px;margin-bottom:2px">${escapeHtml(d.hotel_name)}</strong>
+    <small style="color:#92400e;font-size:12px;font-weight:500">Certified Carbon Footprint</small>
+    <small style="color:#b45309;font-size:11px;display:block;margin-top:2px">${d.breakdown_kg.per_room_night} kg CO₂e/room-night</small>
+  </div>
 </div>`;
       navigator.clipboard?.writeText(html).then(() => alert("Badge HTML copied to clipboard."), () => prompt("Copy this HTML:", html));
     }

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Badge Test Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #0ea5a4;
+      margin-bottom: 20px;
+    }
+    .badge-area {
+      margin-top: 30px;
+      padding: 20px;
+      background: #f9f9f9;
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      min-height: 100px;
+    }
+    .code-area {
+      margin-top: 20px;
+      padding: 15px;
+      background: #2d2d2d;
+      color: #f8f8f2;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .badge-preview {
+      margin-top: 20px;
+      padding: 20px;
+      background: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      min-height: 80px;
+    }
+    .instructions {
+      color: #666;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Badge Test Page</h1>
+    <div class="instructions">
+      <strong>Instructions:</strong>
+      <ol>
+        <li>Run the LCA calculator and fill in your hotel data</li>
+        <li>Click "Calculate Emissions"</li>
+        <li>Click the green "Badge" button (HTML will be copied automatically)</li>
+        <li>Come back to this page and click the button below</li>
+      </ol>
+      <button onclick="pasteBadge()" style="background:#0ea5a4;color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-size:16px;margin-top:10px">📋 Paste Badge from Clipboard</button>
+    </div>
+    
+    <h2>Badge Preview (How it will look on a website):</h2>
+    <div class="badge-preview" id="badgePreview">
+      The badge preview will appear here after you paste...
+    </div>
+
+    <h2>Badge HTML Code:</h2>
+    <div class="code-area" id="codeArea">
+      The HTML code will appear here after you paste...
+    </div>
+  </div>
+
+  <script>
+    async function pasteBadge() {
+      try {
+        const badgeHTML = await navigator.clipboard.readText();
+        document.getElementById('codeArea').textContent = badgeHTML;
+        document.getElementById('badgePreview').innerHTML = badgeHTML;
+      } catch (err) {
+        alert('Failed to read from clipboard. Please make sure you copied the badge first.');
+      }
+    }
+  </script>
+</body>
+</html>
