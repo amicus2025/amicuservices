@@ -88,6 +88,26 @@
         .form-control.placeholder-value:focus {
             color: #212529 !important;
         }
+        .interactive-card {
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .interactive-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+        }
+        .rail-options {
+            border: 1px solid #e6e6e6;
+            border-radius: 12px;
+            padding: 18px;
+            background: #fff;
+        }
+        .rail-options.hidden {
+            display: none;
+        }
+        .rail-controls .form-control {
+            height: calc(1.5em + .75rem + 2px);
+        }
     </style>
 </head>
 <body>
@@ -276,7 +296,7 @@
             </div>
             <div class="row" id="transportOptions">
                 <div class="col-md-4 mb-4">
-                    <div class="services text-center p-4 card-shadow">
+                    <div class="services text-center p-4 card-shadow interactive-card" id="railMetroCard">
                         <div class="icon d-flex justify-content-center align-items-center mb-3"><span class="ion-ios-train"></span></div>
                         <h4 class="mb-2">Rail + Metro</h4>
                         <p>Use airport rail links and metro lines for the lowest per-passenger emissions.</p>
@@ -294,6 +314,29 @@
                         <div class="icon d-flex justify-content-center align-items-center mb-3"><span class="ion-ios-car"></span></div>
                         <h4 class="mb-2">EV Ride Share</h4>
                         <p>Opt for electric or hybrid ride share with pooled trips where possible.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-12">
+                    <div class="rail-options hidden" id="railMetroOptions">
+                        <h5 class="mb-2">Rail + Metro options</h5>
+                        <p class="small text-muted mb-3" id="railMetroSubtitle">Select Rail + Metro to see options for your destination airport.</p>
+                        <div class="row rail-controls">
+                            <div class="col-md-4 mb-2">
+                                <input type="text" class="form-control" id="railAirportSearch" placeholder="Destination airport (IATA, top 50 US)" list="usAirportList">
+                                <datalist id="usAirportList"></datalist>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <select class="form-control" id="railOptionSelect">
+                                    <option value="" selected disabled>Select rail + metro option</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="metric-pill small" id="railEstimate">Estimated: 0 kg CO2e</div>
+                            </div>
+                        </div>
+                        <div class="row" id="railMetroList"></div>
                     </div>
                 </div>
             </div>
@@ -376,8 +419,154 @@
                 { icon: 'ion-ios-train', title: 'RER B Train', desc: 'Direct rail service into Paris with low emissions.' },
                 { icon: 'ion-ios-bus', title: 'Airport Coach', desc: 'Shared coach services to major hubs.' },
                 { icon: 'ion-ios-car', title: 'EV Ride Share', desc: 'Request electric vehicle options where available.' }
+            ],
+            SFO: [
+                { icon: 'ion-ios-train', title: 'BART', desc: 'Bay Area Rapid Transit connects SFO to downtown San Francisco and the East Bay.' },
+                { icon: 'ion-ios-train', title: 'MUNI', desc: 'San Francisco Muni Metro and buses connect the airport to city neighborhoods.' },
+                { icon: 'ion-ios-car', title: 'EV Ride Share', desc: 'Choose EV ride share options where available.' }
             ]
         };
+
+        var topUsAirports = [
+            { code: 'ATL', name: 'Hartsfield–Jackson Atlanta International Airport' },
+            { code: 'DFW', name: 'Dallas/Fort Worth International Airport' },
+            { code: 'DEN', name: 'Denver International Airport' },
+            { code: 'ORD', name: "O'Hare International Airport" },
+            { code: 'LAX', name: 'Los Angeles International Airport' },
+            { code: 'JFK', name: 'John F. Kennedy International Airport' },
+            { code: 'CLT', name: 'Charlotte Douglas International Airport' },
+            { code: 'LAS', name: 'Harry Reid International Airport' },
+            { code: 'MCO', name: 'Orlando International Airport' },
+            { code: 'MIA', name: 'Miami International Airport' },
+            { code: 'PHX', name: 'Phoenix Sky Harbor International Airport' },
+            { code: 'SEA', name: 'Seattle–Tacoma International Airport' },
+            { code: 'SFO', name: 'San Francisco International Airport' },
+            { code: 'EWR', name: 'Newark Liberty International Airport' },
+            { code: 'IAH', name: 'George Bush Intercontinental Airport' },
+            { code: 'BOS', name: 'Logan International Airport' },
+            { code: 'MSP', name: 'Minneapolis–Saint Paul International Airport' },
+            { code: 'FLL', name: 'Fort Lauderdale–Hollywood International Airport' },
+            { code: 'LGA', name: 'LaGuardia Airport' },
+            { code: 'DTW', name: 'Detroit Metropolitan Airport' },
+            { code: 'PHL', name: 'Philadelphia International Airport' },
+            { code: 'SLC', name: 'Salt Lake City International Airport' },
+            { code: 'BWI', name: 'Baltimore/Washington International Airport' },
+            { code: 'IAD', name: 'Washington Dulles International Airport' },
+            { code: 'SAN', name: 'San Diego International Airport' },
+            { code: 'DCA', name: 'Ronald Reagan Washington National Airport' },
+            { code: 'TPA', name: 'Tampa International Airport' },
+            { code: 'BNA', name: 'Nashville International Airport' },
+            { code: 'AUS', name: 'Austin–Bergstrom International Airport' },
+            { code: 'HNL', name: 'Daniel K. Inouye International Airport' },
+            { code: 'MDW', name: 'Midway International Airport' },
+            { code: 'DAL', name: 'Dallas Love Field' },
+            { code: 'PDX', name: 'Portland International Airport' },
+            { code: 'STL', name: 'St. Louis Lambert International Airport' },
+            { code: 'RDU', name: 'Raleigh–Durham International Airport' },
+            { code: 'HOU', name: 'William P. Hobby Airport' },
+            { code: 'SMF', name: 'Sacramento International Airport' },
+            { code: 'MSY', name: 'Louis Armstrong New Orleans International Airport' },
+            { code: 'SJU', name: 'Luis Muñoz Marín International Airport' },
+            { code: 'MCI', name: 'Kansas City International Airport' },
+            { code: 'SJC', name: 'Norman Y. Mineta San José International Airport' },
+            { code: 'SAT', name: 'San Antonio International Airport' },
+            { code: 'RSW', name: 'Southwest Florida International Airport' },
+            { code: 'SNA', name: 'John Wayne Airport' },
+            { code: 'OAK', name: 'Oakland International Airport' },
+            { code: 'IND', name: 'Indianapolis International Airport' },
+            { code: 'CLE', name: 'Cleveland Hopkins International Airport' },
+            { code: 'PIT', name: 'Pittsburgh International Airport' },
+            { code: 'CVG', name: 'Cincinnati/Northern Kentucky International Airport' },
+            { code: 'CMH', name: 'John Glenn Columbus International Airport' }
+        ];
+
+        var railMetroMap = {
+            ATL: [
+                { icon: 'ion-ios-train', title: 'MARTA Rail', desc: 'Red/Gold lines from the airport to Downtown, Midtown, and North Springs.' }
+            ],
+            DFW: [
+                { icon: 'ion-ios-train', title: 'DART Orange Line', desc: 'Rail service to downtown Dallas and surrounding stations.' }
+            ],
+            DEN: [
+                { icon: 'ion-ios-train', title: 'RTD A Line', desc: 'Rail service between DEN and Denver Union Station.' }
+            ],
+            ORD: [
+                { icon: 'ion-ios-train', title: 'CTA Blue Line', desc: 'Direct rail service between O’Hare and Downtown Chicago.' }
+            ],
+            LAX: [
+                { icon: 'ion-ios-train', title: 'LA Metro Rail (C Line)', desc: 'Connect via shuttle to Aviation/LAX Station for Metro Rail access.' }
+            ],
+            JFK: [
+                { icon: 'ion-ios-train', title: 'AirTrain + Subway', desc: 'Connects to NYC Subway and Long Island Rail Road at Jamaica or Howard Beach.' }
+            ],
+            MIA: [
+                { icon: 'ion-ios-train', title: 'Metrorail Orange Line', desc: 'Direct rail from MIA to Downtown Miami.' }
+            ],
+            PHX: [
+                { icon: 'ion-ios-train', title: 'PHX Sky Train + Valley Metro', desc: 'Sky Train connects to Valley Metro Rail at 44th St/Washington.' }
+            ],
+            SEA: [
+                { icon: 'ion-ios-train', title: 'Link Light Rail', desc: 'Direct light rail to Downtown Seattle and beyond.' }
+            ],
+            SFO: [
+                { icon: 'ion-ios-train', title: 'BART', desc: 'Rail to San Francisco, East Bay, and Peninsula cities.' },
+                { icon: 'ion-ios-train', title: 'MUNI', desc: 'Connect to San Francisco Muni via BART or bus links.' }
+            ],
+            EWR: [
+                { icon: 'ion-ios-train', title: 'AirTrain + NJ Transit', desc: 'Rail connections to Newark Penn Station and NYC Penn Station.' }
+            ],
+            MSP: [
+                { icon: 'ion-ios-train', title: 'Metro Blue Line', desc: 'Light rail to downtown Minneapolis and Mall of America.' }
+            ],
+            FLL: [
+                { icon: 'ion-ios-train', title: 'Tri-Rail (via shuttle)', desc: 'Commuter rail from Fort Lauderdale station to Miami and West Palm Beach.' }
+            ],
+            PHL: [
+                { icon: 'ion-ios-train', title: 'SEPTA Airport Line', desc: 'Regional rail to Center City Philadelphia.' }
+            ],
+            SLC: [
+                { icon: 'ion-ios-train', title: 'TRAX Green Line', desc: 'Light rail to downtown Salt Lake City.' }
+            ],
+            BWI: [
+                { icon: 'ion-ios-train', title: 'MARC / Amtrak (via shuttle)', desc: 'Rail connections from BWI Rail Station to Baltimore and Washington, DC.' }
+            ],
+            IAD: [
+                { icon: 'ion-ios-train', title: 'Metro Silver Line', desc: 'Metrorail service to Washington, DC.' }
+            ],
+            DCA: [
+                { icon: 'ion-ios-train', title: 'Metro Blue / Yellow Lines', desc: 'Direct Metrorail access to Washington, DC.' }
+            ],
+            MDW: [
+                { icon: 'ion-ios-train', title: 'CTA Orange Line', desc: 'Rail to Downtown Chicago (Loop).' }
+            ],
+            DAL: [
+                { icon: 'ion-ios-train', title: 'DART Green/Orange Lines', desc: 'Connect via Love Field shuttle to Inwood/Love Field Station.' }
+            ],
+            PDX: [
+                { icon: 'ion-ios-train', title: 'MAX Red Line', desc: 'Light rail to Downtown Portland and Beaverton.' }
+            ],
+            STL: [
+                { icon: 'ion-ios-train', title: 'MetroLink Red Line', desc: 'Light rail to Downtown St. Louis.' }
+            ],
+            OAK: [
+                { icon: 'ion-ios-train', title: 'BART (Airport Connector)', desc: 'Direct rail connection to Coliseum Station and the BART network.' }
+            ],
+            CLE: [
+                { icon: 'ion-ios-train', title: 'RTA Red Line', desc: 'Rail service to downtown Cleveland.' }
+            ]
+        };
+
+        function populateAirportDatalist() {
+            var datalist = document.getElementById('usAirportList');
+            if (!datalist) {
+                return;
+            }
+            datalist.innerHTML = topUsAirports.map(function(airport) {
+                return '<option value="' + airport.code + '">' + airport.code + ' — ' + airport.name + '</option>';
+            }).join('');
+        }
+
+        var currentArrivalAirport = '';
 
         function renderTransportOptions(airportCode) {
             var list = airportTransportMap[airportCode] || [
@@ -398,6 +587,60 @@
                     '</div>'
                 );
             }).join('');
+        }
+
+        function renderRailMetroOptions(airportCode) {
+            var railList = railMetroMap[airportCode] || [];
+            var container = document.getElementById('railMetroList');
+            var subtitle = document.getElementById('railMetroSubtitle');
+            var select = document.getElementById('railOptionSelect');
+
+            if (!airportCode) {
+                subtitle.textContent = 'Enter a destination airport and calculate to see rail + metro options.';
+                container.innerHTML = '';
+                select.innerHTML = '<option value="" selected disabled>Select rail + metro option</option>';
+                return;
+            }
+
+            if (railList.length === 0) {
+                subtitle.textContent = 'No rail or metro options listed for ' + airportCode + ' yet.';
+                container.innerHTML = '';
+                select.innerHTML = '<option value="" selected disabled>No rail + metro options</option>';
+                return;
+            }
+
+            subtitle.textContent = 'Options for ' + airportCode + ':';
+            select.innerHTML = '<option value="" selected disabled>Select rail + metro option</option>' +
+                railList.map(function(item, index) {
+                    return '<option value="' + index + '">' + item.title + '</option>';
+                }).join('');
+            container.innerHTML = railList.map(function(item) {
+                return (
+                    '<div class="col-md-6 mb-3">' +
+                        '<div class="services text-left p-3 card-shadow">' +
+                            '<div class="d-flex align-items-center mb-2">' +
+                                '<span class="mr-2 ' + item.icon + '"></span>' +
+                                '<strong>' + item.title + '</strong>' +
+                            '</div>' +
+                            '<p class="mb-0 small text-muted">' + item.desc + '</p>' +
+                        '</div>' +
+                    '</div>'
+                );
+            }).join('');
+        }
+
+        function updateRailEstimate() {
+            var select = document.getElementById('railOptionSelect');
+            var estimateEl = document.getElementById('railEstimate');
+            var groundDistanceMiles = parseFloat(document.getElementById('groundDistanceKm').value || 0);
+            if (!select.value) {
+                estimateEl.textContent = 'Estimated: 0 kg CO2e';
+                return;
+            }
+            var railKgPerKm = 0.04;
+            var milesToKm = 1.60934;
+            var railKg = groundDistanceMiles * milesToKm * railKgPerKm;
+            estimateEl.textContent = 'Estimated: ' + railKg.toFixed(0) + ' kg CO2e';
         }
 
         function calculateEmissions() {
@@ -468,7 +711,31 @@
             event.preventDefault();
             calculateEmissions();
             var arrival = (document.getElementById('toAirport').value || '').toUpperCase();
+            currentArrivalAirport = arrival;
             renderTransportOptions(arrival);
+        });
+
+        document.getElementById('railMetroCard').addEventListener('click', function() {
+            var optionsBox = document.getElementById('railMetroOptions');
+            optionsBox.classList.remove('hidden');
+            renderRailMetroOptions(currentArrivalAirport);
+        });
+
+        document.getElementById('railAirportSearch').addEventListener('change', function() {
+            var code = (this.value || '').toUpperCase();
+            var isValid = topUsAirports.some(function(airport) {
+                return airport.code === code;
+            });
+            currentArrivalAirport = isValid ? code : '';
+            renderRailMetroOptions(currentArrivalAirport);
+        });
+
+        document.getElementById('railOptionSelect').addEventListener('change', function() {
+            updateRailEstimate();
+        });
+
+        document.getElementById('groundDistanceKm').addEventListener('input', function() {
+            updateRailEstimate();
         });
 
         var zeroPlaceholderFields = ['distanceKm', 'passengers', 'transferDistanceKm', 'groundDistanceKm', 'hotelNights'];
@@ -528,9 +795,15 @@
                 applyZeroPlaceholderStyles();
                 document.getElementById('distanceKm').classList.add('placeholder-value');
                 document.getElementById('passengers').classList.add('placeholder-value');
+                currentArrivalAirport = '';
+                document.getElementById('railMetroOptions').classList.add('hidden');
+                document.getElementById('railAirportSearch').value = '';
+                document.getElementById('railOptionSelect').innerHTML = '<option value="" selected disabled>Select rail + metro option</option>';
+                document.getElementById('railEstimate').textContent = 'Estimated: 0 kg CO2e';
             }, 0);
         });
 
+        populateAirportDatalist();
         applyZeroPlaceholderStyles();
     </script>
 </body>
