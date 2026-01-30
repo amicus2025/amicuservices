@@ -48,6 +48,46 @@
             font-weight: 600;
             font-size: 0.9rem;
         }
+        .metric-pill.small {
+            font-size: 0.85rem;
+            padding: 6px 10px;
+        }
+        .emissions-list li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .emissions-label {
+            flex: 1 1 auto;
+        }
+        .emissions-value {
+            flex: 0 0 auto;
+            text-align: right;
+        }
+        .emissions-divider {
+            border: 0;
+            border-top: 1px solid #e6e6e6;
+            margin: 12px 0 0;
+        }
+        .emissions-highlight {
+            margin-top: 12px;
+            font-weight: 600;
+            color: #0ea5a4;
+        }
+        .form-control::placeholder {
+            color: #b0b0b0;
+        }
+        select.form-control:invalid {
+            color: #b0b0b0 !important;
+            font-size: 0.9rem;
+        }
+        .form-control.placeholder-value {
+            color: #b0b0b0 !important;
+        }
+        .form-control.placeholder-value:focus {
+            color: #212529 !important;
+        }
     </style>
 </head>
 <body>
@@ -113,12 +153,13 @@
                             </div>
                             <div class="form-row">
                                 <div class="form-group col-md-6">
-                                    <label for="distanceKm">Flight Distance (km)</label>
-                                    <input type="number" class="form-control" id="distanceKm" placeholder="3980" min="100" step="10" required>
+                                    <label for="distanceKm">Flight Distance (miles)</label>
+                                    <input type="number" class="form-control" id="distanceKm" value="0" min="0" step="10" required>
                                 </div>
                                 <div class="form-group col-md-6">
                                     <label for="cabinClass">Cabin Class</label>
-                                    <select id="cabinClass" class="form-control">
+                                    <select id="cabinClass" class="form-control" required>
+                                        <option value="" selected disabled hidden>Choose from list</option>
                                         <option value="1">Economy</option>
                                         <option value="1.3">Premium Economy</option>
                                         <option value="1.8">Business</option>
@@ -129,36 +170,38 @@
                             <div class="form-row">
                                 <div class="form-group col-md-6">
                                     <label for="tripType">Trip Type</label>
-                                    <select id="tripType" class="form-control">
+                                    <select id="tripType" class="form-control" required>
+                                        <option value="" selected disabled hidden>Choose from list</option>
                                         <option value="1">One-way</option>
                                         <option value="2">Round-trip</option>
                                     </select>
                                 </div>
                                 <div class="form-group col-md-6">
                                     <label for="passengers">Passengers</label>
-                                    <input type="number" class="form-control" id="passengers" value="1" min="1" step="1">
+                                    <input type="number" class="form-control" id="passengers" value="0" min="0" step="1">
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group col-md-6">
                                     <div class="form-check" style="padding-top: 8px;">
-                                        <input class="form-check-input" type="checkbox" id="includeTransfer" checked>
+                                        <input class="form-check-input" type="checkbox" id="includeTransfer">
                                         <label class="form-check-label" for="includeTransfer">Include transfer flight</label>
                                     </div>
                                 </div>
                                 <div class="form-group col-md-6">
-                                    <label for="transferDistanceKm">Transfer Flight Distance (km)</label>
-                                    <input type="number" class="form-control" id="transferDistanceKm" value="600" min="0" step="10">
+                                    <label for="transferDistanceKm">Transfer Flight Distance (miles)</label>
+                                    <input type="number" class="form-control" id="transferDistanceKm" value="0" min="0" step="10">
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group col-md-6">
-                                    <label for="groundDistanceKm">Ground Transport Distance (km)</label>
-                                    <input type="number" class="form-control" id="groundDistanceKm" value="30" min="1" step="1">
+                                    <label for="groundDistanceKm">Ground Transport Distance (miles)</label>
+                                    <input type="number" class="form-control" id="groundDistanceKm" value="0" min="0" step="1">
                                 </div>
                                 <div class="form-group col-md-6">
                                     <label for="groundMode">Ground Transport Mode</label>
-                                    <select id="groundMode" class="form-control">
+                                    <select id="groundMode" class="form-control" required>
+                                        <option value="" selected disabled hidden>Choose from list</option>
                                         <option value="rideshare">Taxi / Uber / Lyft</option>
                                         <option value="rideshareShared">Rideshare (Shared)</option>
                                         <option value="rental">Rental Car</option>
@@ -170,16 +213,17 @@
                             <div class="form-row">
                                 <div class="form-group col-md-6">
                                     <label for="hotelNights">Hotel Stay (nights)</label>
-                                    <input type="number" class="form-control" id="hotelNights" value="3" min="1" step="1">
+                                    <input type="number" class="form-control" id="hotelNights" value="0" min="0" step="1">
                                 </div>
                             </div>
                             <div class="form-group">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="includeNonCo2" checked>
+                                    <input class="form-check-input" type="checkbox" id="includeNonCo2">
                                     <label class="form-check-label" for="includeNonCo2">Include non-CO2 effects (radiative forcing)</label>
                                 </div>
                             </div>
                             <button type="submit" class="btn btn-primary">Estimate Emissions</button>
+                            <button type="reset" class="btn btn-outline-secondary ml-2">Reset</button>
                         </form>
                     </div>
                 </div>
@@ -188,12 +232,23 @@
                         <h4 class="mb-3">Estimated Emissions</h4>
                         <p class="mb-2">Total estimated journey impact:</p>
                         <div class="mb-3">
-                            <span class="metric-pill" id="emissionsValue">1000 kg CO2e</span>
+                            <span class="metric-pill" id="emissionsValue">0 metric tons CO2</span>
                         </div>
-                        <ul class="list-unstyled mb-3">
-                            <li class="mb-2">Flight Emissions: <span id="flightEmissions">kg CO2e</span></li>
-                            <li class="mb-2">Ground transport (to/from airport): <span id="groundEmissions">45 kg CO2e</span></li>
-                            <li class="mb-2">Hotel stay (nights): <span id="hotelEmissions">135 kg CO2e</span></li>
+                        <ul class="list-unstyled mb-3 emissions-list">
+                            <li class="mb-2">
+                                <span class="emissions-label">Flight Emissions:</span>
+                                <span id="flightEmissions" class="metric-pill small emissions-value">0 kg CO2e</span>
+                            </li>
+                            <li class="mb-2">
+                                <span class="emissions-label">Ground transport (to/from airport):</span>
+                                <span id="groundEmissions" class="metric-pill small emissions-value">0 kg CO2e</span>
+                            </li>
+                            <li class="mb-2">
+                                <span class="emissions-label">Hotel stay (nights):</span>
+                                <span id="hotelEmissions" class="metric-pill small emissions-value">0 kg CO2e</span>
+                            </li>
+                            <hr class="emissions-divider">
+                            <div class="emissions-highlight" id="highestEmission"></div>
                         </ul>
                         <p class="small text-muted">Estimates are based on industry-average emissions factors and publicly available aviation, transport, and lodging data.</p>
                         <div class="mt-4">
@@ -346,16 +401,21 @@
         }
 
         function calculateEmissions() {
-            var distance = parseFloat(document.getElementById('distanceKm').value || 0);
-            var transferDistance = parseFloat(document.getElementById('transferDistanceKm').value || 0);
+            var distanceMiles = parseFloat(document.getElementById('distanceKm').value || 0);
+            var transferDistanceMiles = parseFloat(document.getElementById('transferDistanceKm').value || 0);
             var includeTransfer = document.getElementById('includeTransfer').checked;
             var cabinMultiplier = parseFloat(document.getElementById('cabinClass').value);
             var tripMultiplier = parseFloat(document.getElementById('tripType').value);
             var passengers = parseInt(document.getElementById('passengers').value || 1, 10);
             var includeNonCo2 = document.getElementById('includeNonCo2').checked;
-            var groundDistance = parseFloat(document.getElementById('groundDistanceKm').value || 0);
+            var groundDistanceMiles = parseFloat(document.getElementById('groundDistanceKm').value || 0);
             var groundMode = document.getElementById('groundMode').value;
             var hotelNights = parseInt(document.getElementById('hotelNights').value || 0, 10);
+
+            var milesToKm = 1.60934;
+            var distance = distanceMiles * milesToKm;
+            var transferDistance = transferDistanceMiles * milesToKm;
+            var groundDistance = groundDistanceMiles * milesToKm;
 
             var factor;
             if (distance < 1500) {
@@ -384,11 +444,24 @@
             var hotelStayKg = hotelNights * hotelPerNightKg * passengers;
             var total = flightKg + groundTransportKg + hotelStayKg;
 
-            document.getElementById('emissionsValue').textContent = total.toFixed(0) + ' kg CO2e';
+            var highestLabel = 'Flight emissions';
+            var highestValue = flightKg;
+            if (groundTransportKg > highestValue) {
+                highestLabel = 'Ground transport';
+                highestValue = groundTransportKg;
+            }
+            if (hotelStayKg > highestValue) {
+                highestLabel = 'Hotel stay';
+            }
+
+            var totalTons = total / 1000;
+
+            document.getElementById('emissionsValue').textContent = totalTons.toFixed(2) + ' metric tons CO2';
             document.getElementById('flightEmissions').textContent = flightKg.toFixed(0) + ' kg CO2e';
             document.getElementById('groundEmissions').textContent = groundTransportKg.toFixed(0) + ' kg CO2e';
             document.getElementById('hotelEmissions').textContent = hotelStayKg.toFixed(0) + ' kg CO2e';
-            document.getElementById('journeyTotal').textContent = (total / 1000).toFixed(1) + ' metric tons CO2e';
+            document.getElementById('highestEmission').textContent = 'Greatest impact: ' + highestLabel;
+            document.getElementById('journeyTotal').textContent = (total / 1000).toFixed(1) + ' metric tons CO2';
         }
 
         document.getElementById('emissionsForm').addEventListener('submit', function(event) {
@@ -397,6 +470,68 @@
             var arrival = (document.getElementById('toAirport').value || '').toUpperCase();
             renderTransportOptions(arrival);
         });
+
+        var zeroPlaceholderFields = ['distanceKm', 'passengers', 'transferDistanceKm', 'groundDistanceKm', 'hotelNights'];
+
+        function updateZeroPlaceholderStyle(fieldId) {
+            var field = document.getElementById(fieldId);
+            if (!field) {
+                return;
+            }
+            if (field.value === '0') {
+                field.classList.add('placeholder-value');
+            } else {
+                field.classList.remove('placeholder-value');
+            }
+        }
+
+        function applyZeroPlaceholderStyles() {
+            zeroPlaceholderFields.forEach(function(fieldId) {
+                updateZeroPlaceholderStyle(fieldId);
+            });
+        }
+
+        zeroPlaceholderFields.forEach(function(fieldId) {
+            var field = document.getElementById(fieldId);
+            if (!field) {
+                return;
+            }
+            updateZeroPlaceholderStyle(fieldId);
+            field.addEventListener('input', function() {
+                updateZeroPlaceholderStyle(fieldId);
+            });
+            field.addEventListener('change', function() {
+                updateZeroPlaceholderStyle(fieldId);
+            });
+        });
+
+        document.getElementById('emissionsForm').addEventListener('reset', function() {
+            setTimeout(function() {
+                document.getElementById('fromAirport').value = '';
+                document.getElementById('toAirport').value = '';
+                document.getElementById('distanceKm').value = '0';
+                document.getElementById('cabinClass').value = '';
+                document.getElementById('tripType').value = '';
+                document.getElementById('passengers').value = '0';
+                document.getElementById('includeTransfer').checked = false;
+                document.getElementById('transferDistanceKm').value = '0';
+                document.getElementById('groundDistanceKm').value = '0';
+                document.getElementById('groundMode').value = '';
+                document.getElementById('hotelNights').value = '0';
+                document.getElementById('includeNonCo2').checked = false;
+                document.getElementById('emissionsValue').textContent = '0 metric tons CO2';
+                document.getElementById('flightEmissions').textContent = '0 kg CO2e';
+                document.getElementById('groundEmissions').textContent = '0 kg CO2e';
+                document.getElementById('hotelEmissions').textContent = '0 kg CO2e';
+                document.getElementById('highestEmission').textContent = '';
+                document.getElementById('journeyTotal').textContent = '--';
+                applyZeroPlaceholderStyles();
+                document.getElementById('distanceKm').classList.add('placeholder-value');
+                document.getElementById('passengers').classList.add('placeholder-value');
+            }, 0);
+        });
+
+        applyZeroPlaceholderStyles();
     </script>
 </body>
 </html>

@@ -8069,6 +8069,14 @@ body {
     width: 1110px;
     margin: 0 auto;
     padding: 0; }
+  .ftco-navbar-light .navbar-collapse {
+    justify-content: center; }
+  .ftco-navbar-light .navbar-nav {
+    margin: 0 auto;
+    justify-content: center;
+    width: 100%; }
+  .ftco-navbar-light .navbar-nav .nav-item {
+    text-align: center; }
   .ftco-navbar-light .navbar-brand {
     color: #000000;
     padding-top: .7rem;
