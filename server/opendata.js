@@ -1,13 +1,81 @@
 // Free open-source hotel data fetcher using OpenStreetMap Nominatim
 // No API key required - completely free
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+const US_STATE_CODES = new Set([
+  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD',
+  'MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC',
+  'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC'
+]);
+
+const COUNTRY_ALIASES = new Map([
+  ["uk", "United Kingdom"],
+  ["u.k.", "United Kingdom"],
+  ["great britain", "United Kingdom"],
+  ["england", "United Kingdom"],
+  ["scotland", "United Kingdom"],
+  ["wales", "United Kingdom"],
+  ["u.s.", "USA"],
+  ["us", "USA"],
+  ["united states", "USA"]
+]);
+
+function normalizeLocation(city, country) {
+  let normalizedCity = (city || '').trim();
+  let normalizedCountry = (country || '').trim();
+
+  if (!normalizedCountry && normalizedCity.includes(',')) {
+    const parts = normalizedCity.split(',').map(part => part.trim()).filter(Boolean);
+    if (parts.length > 1) {
+      normalizedCountry = parts[parts.length - 1];
+    }
+  }
+
+  const alias = COUNTRY_ALIASES.get(normalizedCountry.toLowerCase());
+  if (alias) {
+    normalizedCountry = alias;
+  }
+
+  const countryUpper = normalizedCountry.toUpperCase();
+  if (countryUpper && US_STATE_CODES.has(countryUpper)) {
+    normalizedCountry = 'USA';
+    if (normalizedCity && !normalizedCity.toUpperCase().includes(countryUpper)) {
+      normalizedCity = `${normalizedCity}, ${countryUpper}`;
+    }
+  }
+
+  if (!normalizedCountry && normalizedCity.includes(',')) {
+    const parts = normalizedCity.split(',').map(part => part.trim());
+    const lastPart = (parts[parts.length - 1] || '').toUpperCase();
+    if (US_STATE_CODES.has(lastPart)) {
+      normalizedCountry = 'USA';
+    }
+  }
+
+  return { city: normalizedCity || city, country: normalizedCountry || country };
+}
+
 export async function searchOpenSourceHotels({ city, country }) {
   try {
-    console.log(`Searching for hotels in: city="${city}", country="${country}"`);
+    const normalized = normalizeLocation(city, country);
+    const inputCity = normalized.city;
+    const inputCountry = normalized.country;
+
+    console.log(`Searching for hotels in: city="${inputCity}", country="${inputCountry}"`);
     
     // First, determine if we have a city or country
-    let finalCity = city;
-    let finalCountry = country;
+    let finalCity = inputCity;
+    let finalCountry = inputCountry;
     
     // If no country provided, check if the city parameter is actually a country
     if (!finalCountry || finalCountry === '') {
@@ -32,13 +100,14 @@ export async function searchOpenSourceHotels({ city, country }) {
     console.log(`Final search parameters: city="${finalCity}", country="${finalCountry}"`);
     
     // Get coordinates for the city
-    const cityGeocodeResponse = await fetch(
+    const cityGeocodeResponse = await fetchWithTimeout(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(finalCity)}${finalCountry ? ',' + encodeURIComponent(finalCountry) : ''}&format=json&limit=1&timeout=10`,
       {
         headers: {
           'User-Agent': 'AmicusServices-HotelSearch/1.0'
         }
-      }
+      },
+      8000
     );
     
     if (!cityGeocodeResponse.ok) {
@@ -65,7 +134,7 @@ export async function searchOpenSourceHotels({ city, country }) {
       hotels = await fallbackNominatimSearch({ city: finalCity, country: finalCountry });
     }
     
-    console.log(`Total hotels found: ${hotels.length}`);
+    console.log(`Total hotels found: ${hotels.length}. Sustainable matches: ${filterSustainableHotels(hotels).length}`);
     return hotels;
 
   } catch (error) {
@@ -74,11 +143,39 @@ export async function searchOpenSourceHotels({ city, country }) {
   }
 }
 
+function filterSustainableHotels(hotels) {
+  const keywords = [
+    'eco',
+    'green',
+    'sustainable',
+    'carbon',
+    'leed',
+    'earthcheck',
+    'green key',
+    'green globe',
+    'energy',
+    'solar',
+    'renewable'
+  ];
+
+  return (hotels || []).filter(h => {
+    const haystack = [
+      h.name,
+      h.description,
+      h.website,
+      (h.amenities || []).join(' ')
+    ].join(' ').toLowerCase();
+
+    return keywords.some(k => haystack.includes(k));
+  });
+}
+
 async function isCountry(name) {
   try {
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=json&limit=1&timeout=5`,
-      { headers: { 'User-Agent': 'AmicusServices-HotelSearch/1.0' } }
+      { headers: { 'User-Agent': 'AmicusServices-HotelSearch/1.0' } },
+      5000
     );
     
     if (!response.ok) return false;
@@ -200,9 +297,10 @@ async function findMajorCityInCountry(country) {
 
 async function detectCountryFromCity(city) {
   try {
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1&timeout=5`,
-      { headers: { 'User-Agent': 'AmicusServices-HotelSearch/1.0' } }
+      { headers: { 'User-Agent': 'AmicusServices-HotelSearch/1.0' } },
+      5000
     );
     
     if (!response.ok) return null;
@@ -227,12 +325,12 @@ async function queryOverpassAPI(lat, lon, city, country) {
   try {
     console.log('Querying Overpass API...');
     
-    // Larger bbox for better coverage in regions - 1 degree ≈ 111 km
-    const bbox = `${lat-1.0},${lon-1.0},${lat+1.0},${lon+1.0}`;
+    // Smaller bbox for faster responses - 0.3 degree ≈ 33 km
+    const bbox = `${lat-0.3},${lon-0.3},${lat+0.3},${lon+0.3}`;
     
     // More permissive query - separate the name requirement
     const overpassQuery = `
-      [bbox:${bbox}];
+      [out:json][timeout:25][bbox:${bbox}];
       (
         node["tourism"="hotel"];
         way["tourism"="hotel"];
@@ -247,17 +345,18 @@ async function queryOverpassAPI(lat, lon, city, country) {
         node["amenity"="hotel"];
         way["amenity"="hotel"];
       );
-      out center geom;
-      timeout 25;
+      out center;
     `;
     
-    const overpassResponse = await fetch('https://overpass-api.de/api/interpreter', {
+    const overpassResponse = await fetchWithTimeout('https://overpass-api.de/api/interpreter', {
       method: 'POST',
       body: overpassQuery,
       headers: {
-        'User-Agent': 'AmicusServices-HotelSearch/1.0'
+        'User-Agent': 'AmicusServices-HotelSearch/1.0',
+        'Accept': 'application/json',
+        'Content-Type': 'text/plain'
       }
-    });
+    }, 8000);
     
     if (!overpassResponse.ok) {
       console.error(`Overpass API error: ${overpassResponse.status}`);
@@ -275,7 +374,6 @@ async function queryOverpassAPI(lat, lon, city, country) {
         if (!lat || !lon) return false;
         return true;
       })
-      .slice(0, 200)
       .map((elem, idx) => {
         const lat = elem.center ? elem.center.lat : elem.lat;
         const lon = elem.center ? elem.center.lon : elem.lon;
@@ -321,6 +419,14 @@ async function queryOverpassAPI(lat, lon, city, country) {
     
     // Second pass: try to enrich hotels without names using Nominatim reverse geocoding
     console.log(`Before enrichment: ${hotels.filter(h => h.name).length} hotels with names`);
+
+    const missingNames = hotels.filter(h => !h.name);
+    if (missingNames.length > 20) {
+      hotels = applyFallbackHotelNames(hotels, city);
+      console.log('Skipped enrichment due to large unnamed set, applying fallback names.');
+      console.log(`Overpass returned ${hotels.length} hotels`);
+      return hotels;
+    }
     
     hotels = await enrichHotelNames(hotels, city, country);
     
@@ -334,19 +440,29 @@ async function queryOverpassAPI(lat, lon, city, country) {
   }
 }
 
+function applyFallbackHotelNames(hotels, city) {
+  return hotels.map(h => {
+    if (!h.name || h.name.trim() === '') {
+      return { ...h, name: `${city} Hotel #${Math.floor(Math.random() * 9000) + 1000}` };
+    }
+    return h;
+  });
+}
+
 async function enrichHotelNames(hotels, city, country) {
   try {
     // For hotels without names, try to get names via reverse geocoding or nearby search
-    const hotelsWithoutNames = hotels.filter(h => !h.name);
+    const hotelsWithoutNames = hotels.filter(h => !h.name).slice(0, 20);
     
     console.log(`Enriching ${hotelsWithoutNames.length} hotels without names...`);
     
     for (let hotel of hotelsWithoutNames) {
       try {
         // Try reverse geocoding to find nearby named POIs
-        const reverseResponse = await fetch(
+        const reverseResponse = await fetchWithTimeout(
           `https://nominatim.openstreetmap.org/reverse?format=json&lat=${hotel.lat}&lon=${hotel.lon}&zoom=18&addressdetails=1`,
-          { headers: { 'User-Agent': 'AmicusServices-HotelSearch/1.0' } }
+          { headers: { 'User-Agent': 'AmicusServices-HotelSearch/1.0' } },
+          6000
         );
         
         if (reverseResponse.ok) {
@@ -400,13 +516,14 @@ async function fallbackNominatimSearch({ city, country }) {
     console.log(`Using fallback Nominatim search for: ${city}, ${country}`);
     
     // First, get the city bounding box to use with Overpass
-    const cityGeocodeResponse = await fetch(
+    const cityGeocodeResponse = await fetchWithTimeout(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}${country ? ',' + encodeURIComponent(country) : ''}&format=json&limit=1&timeout=10`,
       {
         headers: {
           'User-Agent': 'AmicusServices-HotelSearch/1.0'
         }
-      }
+      },
+      8000
     );
     
     if (cityGeocodeResponse.ok) {
@@ -426,11 +543,15 @@ async function fallbackNominatimSearch({ city, country }) {
             out center;
           `;
           
-          const overpassResponse = await fetch('https://overpass-api.de/api/interpreter', {
+          const overpassResponse = await fetchWithTimeout('https://overpass-api.de/api/interpreter', {
             method: 'POST',
             body: overpassQuery,
-            headers: { 'User-Agent': 'AmicusServices-HotelSearch/1.0' }
-          });
+            headers: {
+              'User-Agent': 'AmicusServices-HotelSearch/1.0',
+              'Accept': 'application/json',
+              'Content-Type': 'text/plain'
+            }
+          }, 8000);
           
           if (overpassResponse.ok) {
             const osmData = await overpassResponse.json();
@@ -438,7 +559,6 @@ async function fallbackNominatimSearch({ city, country }) {
               console.log(`Found ${osmData.elements.length} hotels via Overpass`);
               return (osmData.elements || [])
                 .filter(elem => elem.tags && elem.tags.name && (elem.lat || (elem.center && elem.center.lat)))
-                .slice(0, 50)
                 .map((elem, idx) => {
                   const lat = elem.center ? elem.center.lat : elem.lat;
                   const lon = elem.center ? elem.center.lon : elem.lon;
@@ -478,15 +598,17 @@ async function fallbackNominatimSearch({ city, country }) {
       }
     }
     
-    // Fallback to Nominatim search
+    // Fallback to Nominatim search with hotel-specific query
     console.log('Using Nominatim direct search...');
-    const hotelSearchResponse = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}${country ? ',' + encodeURIComponent(country) : ''}&format=json&limit=100&timeout=10`,
+    const nominatimQuery = `hotel ${city}${country ? ', ' + country : ''}`;
+    const hotelSearchResponse = await fetchWithTimeout(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(nominatimQuery)}&format=json&limit=200&timeout=10`,
       {
         headers: {
           'User-Agent': 'AmicusServices-HotelSearch/1.0'
         }
-      }
+      },
+      8000
     );
     
     if (!hotelSearchResponse.ok) {
@@ -514,7 +636,6 @@ async function fallbackNominatimSearch({ city, country }) {
                                    h.name.toLowerCase().includes('hostel')));
         return isHotel;
       })
-      .slice(0, 100)
       .map((elem, idx) => {
         let website = '#';
         

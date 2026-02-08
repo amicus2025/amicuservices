@@ -61,7 +61,7 @@ body{margin:0;background:var(--bg);color:#0f172a}
       <div class="logo">AC</div>
       <div>
         <div class="title">AmicusTravel — Sustainable Hotel Search</div>
-        <div class="small">Find eco-friendly hotels (EU, US, Asia, Middle East). Submit hotels, see map, or list your CO2 rating.</div>
+        <div class="small">Find eco-friendly hotels (EU, US, Asia, Middle East). We never collect payments. Booking always redirects to the hotel or map provider.</div>
       </div>
     </div>
 
@@ -87,6 +87,7 @@ body{margin:0;background:var(--bg);color:#0f172a}
               <option value="Ultra-Low">Ultra-Low</option>
               <option value="Low">Low</option>
               <option value="Medium">Medium</option>
+              <option value="Carbon Neutral">Carbon Neutral</option>
             </select>
           </div>
 
@@ -97,6 +98,9 @@ body{margin:0;background:var(--bg);color:#0f172a}
               <option>LEED Gold</option>
               <option>EarthCheck</option>
               <option>Green Globe</option>
+              <option>Green Key</option>
+              <option>Renewable Energy</option>
+              <option>Solar Power</option>
             </select>
             <select id="starFilter" class="input">
               <option value="">Star Rating</option>
@@ -125,16 +129,18 @@ body{margin:0;background:var(--bg);color:#0f172a}
           <div class="results-header">
             <div>
               <div style="font-weight:700">Search Results</div>
-              <div class="small">Click a card to view details and book. All links go directly to Google Maps.</div>
+              <div class="small">Click a card to view details. Booking opens the provider in a new tab (no payments collected here).</div>
             </div>
             <div class="flex">
-              <div class="badge">Dataset: OpenStreetMap + local submissions</div>
+              <div class="badge">Dataset: Server search + local submissions</div>
             </div>
           </div>
+          <div id="resultsSummary" class="small" style="margin-bottom:8px"></div>
 
           <div id="resultsList" style="max-height:420px;overflow-y:auto;margin-bottom:16px;border:1px solid #e6edf3;border-radius:8px;padding:8px">
             <!-- Search results cards display here with scrolling enabled - shows ~4-5 cards before scrolling -->
           </div>
+          <div id="resultsPager" class="small" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"></div>
         </section>
 
         <section class="card" style="margin-top:12px">
@@ -156,36 +162,25 @@ body{margin:0;background:var(--bg);color:#0f172a}
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-  // ---------- Fetch hotels from OpenStreetMap API ----------
-  async function fetchOpenMapHotels() {
-    // Return empty array on initial load - user must enter a search
-    return [];
-  }
-
-  // ---------- Sample hotel data ----------
-  function getSampleHotels() {
-    return [
-      {id:'h1', name:'Green Valley Resort', city:'San Francisco', country:'USA', region:'US', lat:37.7749, lon:-122.4194, stars:4, certifications:['LEED','Green Key'], co2_rating:'Ultra-Low', description:'Eco-luxury resort with solar power', amenities:['Solar','EV Charging','Organic Food']},
-      {id:'h2', name:'Eco Garden Hotel', city:'Portland', country:'USA', region:'US', lat:45.5152, lon:-122.6784, stars:3, certifications:['Green Key'], co2_rating:'Low', description:'Sustainable boutique hotel', amenities:['Recycling','LED Lighting']},
-      {id:'h3', name:'Sustainable Inn', city:'Seattle', country:'USA', region:'US', lat:47.6062, lon:-122.3321, stars:3, certifications:['LEED'], co2_rating:'Low', description:'Downtown eco-friendly lodging', amenities:['Solar','Bike Rental']},
-      {id:'h4', name:'Planet-Friendly Lodge', city:'Los Angeles', country:'USA', region:'US', lat:34.0522, lon:-118.2437, stars:4, certifications:['Green Key','EarthCheck'], co2_rating:'Medium', description:'Modern sustainable hotel', amenities:['EV Charging','Water Conservation']},
-      {id:'h5', name:'Nature\'s Haven', city:'Denver', country:'USA', region:'US', lat:39.7392, lon:-104.9903, stars:3, certifications:['Green Key'], co2_rating:'Low', description:'Mountain retreat with eco focus', amenities:['Solar','Composting']},
-      {id:'h6', name:'Verdant Hotel', city:'Austin', country:'USA', region:'US', lat:30.2672, lon:-97.7431, stars:4, certifications:['LEED'], co2_rating:'Ultra-Low', description:'Carbon-neutral city hotel', amenities:['Solar','EV Charging','Organic Food']},
-      {id:'h7', name:'Green Earth Inn', city:'New York', country:'USA', region:'US', lat:40.7128, lon:-74.0060, stars:4, certifications:['LEED','Green Key'], co2_rating:'Medium', description:'Urban sustainable accommodation', amenities:['LED Lighting','Recycling']},
-      {id:'h8', name:'Eco Paradise Resort', city:'Miami', country:'USA', region:'US', lat:25.7617, lon:-80.1918, stars:5, certifications:['Green Key','EarthCheck'], co2_rating:'Low', description:'Beachfront eco resort', amenities:['Solar','Water Conservation','Organic Food']},
-      {id:'h9', name:'Sustainable Stay', city:'Chicago', country:'USA', region:'US', lat:41.8781, lon:-87.6298, stars:3, certifications:['Green Key'], co2_rating:'Medium', description:'Green hotel in the city', amenities:['Recycling','LED Lighting']},
-      {id:'h10', name:'Planet Hotel', city:'Boston', country:'USA', region:'US', lat:42.3601, lon:-71.0589, stars:4, certifications:['LEED'], co2_rating:'Low', description:'Historic eco-renovated building', amenities:['Solar','EV Charging']},
-      {id:'h11', name:'Green Haven Hotel', city:'Paris', country:'France', region:'EU', lat:48.8566, lon:2.3522, stars:4, certifications:['EU Ecolabel','Green Key'], co2_rating:'Low', description:'Parisian eco-chic hotel', amenities:['Solar','Bike Rental','Organic Food']},
-      {id:'h12', name:'Eco Barcelona', city:'Barcelona', country:'Spain', region:'EU', lat:41.3851, lon:2.1734, stars:3, certifications:['Green Key'], co2_rating:'Medium', description:'Mediterranean sustainable inn', amenities:['Solar','Recycling']},
-      {id:'h13', name:'Green Rome Lodge', city:'Rome', country:'Italy', region:'EU', lat:41.9028, lon:12.4964, stars:4, certifications:['EU Ecolabel'], co2_rating:'Low', description:'Historic center eco hotel', amenities:['LED Lighting','Water Conservation']},
-      {id:'h14', name:'Sustainability Berlin', city:'Berlin', country:'Germany', region:'EU', lat:52.5200, lon:13.4050, stars:3, certifications:['EU Ecolabel','Green Key'], co2_rating:'Ultra-Low', description:'Carbon-neutral accommodation', amenities:['Solar','EV Charging']},
-      {id:'h15', name:'Eco Amsterdam', city:'Amsterdam', country:'Netherlands', region:'EU', lat:52.3676, lon:4.9041, stars:4, certifications:['Green Key'], co2_rating:'Low', description:'Canal-side green hotel', amenities:['Bike Rental','Organic Food']},
-      {id:'h16', name:'Green Tokyo Inn', city:'Tokyo', country:'Japan', region:'Asia', lat:35.6762, lon:139.6503, stars:4, certifications:['Green Key','EarthCheck'], co2_rating:'Medium', description:'Modern Japanese eco hotel', amenities:['LED Lighting','Recycling']},
-      {id:'h17', name:'Sustainable Bangkok', city:'Bangkok', country:'Thailand', region:'Asia', lat:13.7563, lon:100.5018, stars:3, certifications:['Green Key'], co2_rating:'Low', description:'Tropical eco resort', amenities:['Solar','Water Conservation']},
-      {id:'h18', name:'Earth Hotel Singapore', city:'Singapore', country:'Singapore', region:'Asia', lat:1.3521, lon:103.8198, stars:5, certifications:['Green Mark','EarthCheck'], co2_rating:'Ultra-Low', description:'Award-winning green building', amenities:['Solar','EV Charging','Organic Food']},
-      {id:'h19', name:'Eco Sydney', city:'Sydney', country:'Australia', region:'Oceania', lat:-33.8688, lon:151.2093, stars:4, certifications:['Green Key'], co2_rating:'Low', description:'Harbor-view sustainable hotel', amenities:['Solar','Recycling']},
-      {id:'h20', name:'Green Auckland Lodge', city:'Auckland', country:'New Zealand', region:'Oceania', lat:-36.8485, lon:174.7633, stars:3, certifications:['Qualmark Enviro'], co2_rating:'Low', description:'Kiwi eco hospitality', amenities:['Solar','Composting','Organic Food']}
-    ];
+  // ---------- Server-side hotel search (OpenStreetMap via API) ----------
+  async function fetchHotelsFromServer(destination) {
+    if(!destination) return [];
+    const city = destination.trim();
+    const country = '';
+    const url = `http://127.0.0.1:5000/api/hotels/search?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    try {
+      const res = await fetch(url, { headers: { 'Accept': 'application/json' }, signal: controller.signal });
+      if(!res.ok) throw new Error(`Search failed: ${res.status}`);
+      const data = await res.json();
+      return Array.isArray(data.hotels) ? data.hotels : [];
+    } catch (e) {
+      console.warn('Server search unavailable, falling back to sample data.', e);
+      return [];
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   // ---------- App state ----------
@@ -193,15 +188,14 @@ body{margin:0;background:var(--bg);color:#0f172a}
   let allHotels = [];       // store all loaded hotels for filtering
   let markers = {};         // map markers
   let map, markersLayer;
+  let currentPage = 1;
+  const pageSize = 10;
+  let visibleHotels = [];
 
   // initialize
   async function init() {
-    const stored = localStorage.getItem('amicus_hotels_v1');
-    const local = stored ? JSON.parse(stored) : [];
-
-    const apiHotels = await fetchOpenMapHotels();
     // Don't load hotels on init - only show results after search
-    allHotels = [...apiHotels, ...local];  // keep in backup for filtering but don't display
+    allHotels = [];
     hotels = [];  // start with empty results
 
     initMap();
@@ -214,20 +208,19 @@ body{margin:0;background:var(--bg);color:#0f172a}
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19, attribution: '© OpenStreetMap'
     }).addTo(map);
-    markersLayer = L.layerGroup().addTo(map);
+    markersLayer = L.featureGroup().addTo(map);
     refreshMarkers();
   }
 
-  function refreshMarkers(){
+  function refreshMarkers(list = hotels){
     if(!map || !markersLayer) {
       console.warn('Map or markersLayer not initialized yet');
       return;
     }
     markersLayer.clearLayers();
     markers = {};
-    console.log('Refreshing markers for', hotels.length, 'hotels');
-    hotels.forEach(h => {
-      console.log('Hotel:', h.name, 'ID:', h.id, 'Lat:', h.lat, 'Lon:', h.lon);
+    const items = Array.isArray(list) ? list : [];
+    items.forEach(h => {
       if(h.lat && h.lon){
         // Use default Leaflet markers (small blue pins)
         const m = L.marker([h.lat, h.lon]).addTo(markersLayer);
@@ -249,9 +242,17 @@ body{margin:0;background:var(--bg);color:#0f172a}
     const container = document.getElementById('resultsList');
     if(!list || list.length===0){
       container.innerHTML = '';
+      const summary = document.getElementById('resultsSummary');
+      if(summary) summary.textContent = '';
+      visibleHotels = [];
+      refreshMarkers([]);
+      renderPagination(0);
       return;
     }
-    container.innerHTML = list.map(h => `
+    const startIndex = (currentPage - 1) * pageSize;
+    const pageItems = list.slice(startIndex, startIndex + pageSize);
+    visibleHotels = pageItems;
+    container.innerHTML = pageItems.map(h => `
       <div class="hotel-card" data-id="${h.id}">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div style="font-weight:700">${h.name}</div>
@@ -273,6 +274,7 @@ body{margin:0;background:var(--bg);color:#0f172a}
         // pan to marker if present
         const h = hotels.find(x => x.id===id);
         if(h && h.lat && h.lon) map.setView([h.lat, h.lon], 8);
+        if(markers[id]) markers[id].openPopup();
       });
       // Book button handler
       const bookBtn = el.querySelector('button[data-url]');
@@ -284,6 +286,92 @@ body{margin:0;background:var(--bg);color:#0f172a}
         });
       }
     });
+
+    const summary = document.getElementById('resultsSummary');
+    if(summary) summary.textContent = `Showing ${pageItems.length} of ${list.length} hotels`;
+
+    refreshMarkers(pageItems);
+
+    renderPagination(list.length);
+  }
+
+  function renderPagination(totalItems){
+    const pager = document.getElementById('resultsPager');
+    if(!pager) return;
+    if(!totalItems || totalItems <= pageSize){
+      pager.innerHTML = '';
+      return;
+    }
+
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const buttons = [];
+    const prevDisabled = currentPage === 1;
+    const nextDisabled = currentPage === totalPages;
+    buttons.push(`<button class="btn ghost" data-page="${currentPage - 1}" style="padding:6px 10px;" ${prevDisabled ? 'disabled' : ''}>Prev</button>`);
+    for(let i = 1; i <= totalPages; i += 1){
+      const isActive = i === currentPage;
+      buttons.push(`<button class="btn ghost" data-page="${i}" style="padding:6px 10px;${isActive ? 'border:1px solid var(--accent);' : ''}">${i}</button>`);
+    }
+    buttons.push(`<button class="btn ghost" data-page="${currentPage + 1}" style="padding:6px 10px;" ${nextDisabled ? 'disabled' : ''}>Next</button>`);
+    pager.innerHTML = buttons.join('');
+
+    pager.querySelectorAll('button[data-page]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentPage = parseInt(btn.getAttribute('data-page'), 10) || 1;
+        if(currentPage < 1) currentPage = 1;
+        if(currentPage > totalPages) currentPage = totalPages;
+        renderResults(hotels);
+      });
+    });
+  }
+
+  function buildGoogleMapsUrl(hotel){
+    const name = hotel.name || 'hotel';
+    const city = hotel.city || hotel.country || '';
+    return `https://www.google.com/maps/search/${encodeURIComponent(name)}+${encodeURIComponent(city)}`;
+  }
+
+  function deriveSustainabilityTags(hotel){
+    const text = [
+      hotel.name,
+      hotel.description,
+      hotel.notes,
+      hotel.website,
+      (hotel.amenities || []).join(' ')
+    ].join(' ').toLowerCase();
+
+    const certifications = [];
+    if(text.includes('leed platinum')) certifications.push('LEED Platinum');
+    if(text.includes('leed gold')) certifications.push('LEED Gold');
+    if(text.includes('leed')) certifications.push('LEED');
+    if(text.includes('earthcheck')) certifications.push('EarthCheck');
+    if(text.includes('green key')) certifications.push('Green Key');
+    if(text.includes('green globe')) certifications.push('Green Globe');
+
+    const hasSolar = text.includes('solar');
+    const hasRenewable = text.includes('renewable') || text.includes('energy');
+    if(hasSolar) certifications.push('Solar Power');
+    if(hasRenewable) certifications.push('Renewable Energy');
+
+    let co2Rating = 'Low';
+    if(text.includes('carbon neutral') || text.includes('net zero')) {
+      co2Rating = 'Carbon Neutral';
+    } else if(text.includes('ultra-low') || text.includes('zero carbon')) {
+      co2Rating = 'Ultra-Low';
+    } else if(text.includes('low') || text.includes('eco') || text.includes('green') || text.includes('sustainable')) {
+      co2Rating = 'Low';
+    }
+
+    return { certifications: Array.from(new Set(certifications)), co2Rating };
+  }
+
+  function fitMapToMarkers(){
+    if(!map || !markersLayer) return;
+    if(typeof markersLayer.getBounds !== 'function') return;
+    const bounds = markersLayer.getBounds();
+    if(bounds && bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [40, 40] });
+    }
   }
 
   // select hotel
@@ -339,40 +427,33 @@ body{margin:0;background:var(--bg);color:#0f172a}
 
     console.log('Search clicked with query:', q);
 
-    // If query is entered (destination), use sample data
+    // If query is entered (destination), use server data only
     if(q) {
       try {
-        console.log('Searching sample data for destination:', q);
+        console.log('Searching server data for destination:', q);
         // Clear previous results before fetching new ones
         hotels = [];
         allHotels = [];
         renderResults([]);
         markersLayer.clearLayers();
+
+        // Try server-side OpenStreetMap search first
+        const serverHotels = await fetchHotelsFromServer(q);
+        const dataSourceHotels = serverHotels;
         
-        // Get sample hotels and filter by search query
-        const sampleData = getSampleHotels();
-        const queryLower = q.toLowerCase();
-        
-        // Filter hotels by city, country, or region
-        const filteredHotels = sampleData.filter(hotel => {
-          return (hotel.city && hotel.city.toLowerCase().includes(queryLower)) ||
-                 (hotel.country && hotel.country.toLowerCase().includes(queryLower)) ||
-                 (hotel.region && hotel.region.toLowerCase().includes(queryLower)) ||
-                 (hotel.name && hotel.name.toLowerCase().includes(queryLower));
-        });
-        
-        console.log('Filtered hotels:', filteredHotels);
-        
-        if(filteredHotels.length === 0) {
+        console.log('Filtered hotels:', dataSourceHotels);
+
+        if(dataSourceHotels.length === 0) {
           alert('No hotels found for "' + q + '". Try a different destination.');
           return;
         }
         
-        // Map filtered hotels to the expected format
-        const apiHotels = filteredHotels.map(h => {
+        // Map hotels to the expected format
+        const apiHotels = dataSourceHotels.map(h => {
+          const derived = deriveSustainabilityTags(h);
           const starsNum = h.stars || 3;
           const starsDisplay = '\u2b50'.repeat(Math.min(5, Math.max(1, starsNum))) + ` ${starsNum}-star`;
-          const co2Rating = h.leed ? 'Ultra-Low' : h.co2_rating || 'Medium';
+          const co2Rating = h.co2_rating || derived.co2Rating || (h.leed ? 'Ultra-Low' : 'Medium');
           const hotelName = h.name || `Hotel in ${h.city || h.country || 'Unknown'}`;
           
           const hotelObj = {
@@ -381,13 +462,13 @@ body{margin:0;background:var(--bg);color:#0f172a}
             city: h.city,
             country: h.country,
             region: h.region || 'Other',
-            certifications: h.certifications || [],
+            certifications: (h.certifications && h.certifications.length > 0) ? h.certifications : derived.certifications,
             co2_rating: co2Rating,
             stars: starsNum,
             notes: `Eco-friendly hotel \u2022 ${starsDisplay} \u2022 CO\u2082: ${co2Rating}`,
             description: h.description || '',
-            // Create Google Maps booking link
-            affiliate_url: h.affiliate_url || `https://www.google.com/maps/search/${encodeURIComponent(h.name || 'hotel')}+${encodeURIComponent(h.city || h.country || '')}`,
+            // Booking link always redirects to Google Maps for now
+            affiliate_url: buildGoogleMapsUrl(h),
             lat: parseFloat(h.lat),
             lon: parseFloat(h.lon),
             amenities: h.amenities || []
@@ -395,12 +476,11 @@ body{margin:0;background:var(--bg);color:#0f172a}
           console.log('Mapped hotel:', hotelObj);
           return hotelObj;
         });
-        
+
         console.log('Mapped API hotels:', apiHotels);
         console.log('First hotel coords:', apiHotels[0]?.lat, apiHotels[0]?.lon);
         
-        const localHotels = hotels.filter(x => x.id && String(x.id).startsWith('local-'));
-        hotels = [...apiHotels, ...localHotels];
+        hotels = [...apiHotels];
         allHotels = [...hotels];  // update backup
         console.log('Total hotels after merge:', hotels.length);
         console.log('Hotels before country filter:', hotels.map(h => ({ name: h.name, country: h.country, region: h.region })));
@@ -423,17 +503,20 @@ body{margin:0;background:var(--bg);color:#0f172a}
           });
         }
         
+        currentPage = 1;
         renderResults(filteredResults);
-        refreshMarkers();
+        fitMapToMarkers();
         
-        if(map && apiHotels.length > 0 && apiHotels[0].lat && apiHotels[0].lon) {
-          console.log('Centering map on:', apiHotels[0].lat, apiHotels[0].lon);
-          map.setView([apiHotels[0].lat, apiHotels[0].lon], 6);
-        } else if(map && hotels.length > 0) {
-          const firstHotel = hotels.find(h => h.lat && h.lon);
-          if(firstHotel) {
-            console.log('Centering map on first valid hotel:', firstHotel.lat, firstHotel.lon);
-            map.setView([firstHotel.lat, firstHotel.lon], 6);
+        if(map && (!markersLayer || !markersLayer.getBounds().isValid())) {
+          if(apiHotels.length > 0 && apiHotels[0].lat && apiHotels[0].lon) {
+            console.log('Centering map on:', apiHotels[0].lat, apiHotels[0].lon);
+            map.setView([apiHotels[0].lat, apiHotels[0].lon], 6);
+          } else if(hotels.length > 0) {
+            const firstHotel = hotels.find(h => h.lat && h.lon);
+            if(firstHotel) {
+              console.log('Centering map on first valid hotel:', firstHotel.lat, firstHotel.lon);
+              map.setView([firstHotel.lat, firstHotel.lon], 6);
+            }
           }
         }
       } catch(e) {
@@ -454,8 +537,8 @@ body{margin:0;background:var(--bg);color:#0f172a}
 
     console.log('Filtered results:', filtered);
     hotels = filtered;
+    currentPage = 1;
     renderResults(filtered);
-    refreshMarkers();
     
     // update markers visibility: simple approach - recenter to first
     if(map && filtered.length>0 && filtered[0].lat && filtered[0].lon) map.setView([filtered[0].lat, filtered[0].lon], 4);
@@ -466,55 +549,14 @@ body{margin:0;background:var(--bg);color:#0f172a}
     document.getElementById('co2Filter').value='';
     document.getElementById('certFilter').value='';
     document.getElementById('query').value='';
-    hotels = [...allHotels];
-    renderResults(hotels);
-    refreshMarkers();
+    hotels = [];
+    allHotels = [];
+    currentPage = 1;
+    renderResults([]);
+    const selected = document.getElementById('selected');
+    if(selected) selected.innerHTML = '';
     if(map) map.setView([20,0],2);
   });
-
-  // submit hotel (saves to localStorage)
-  const submitBtn = document.getElementById('submitHotel');
-  if(submitBtn) {
-    submitBtn.addEventListener('click', () => {
-      const name = document.getElementById('s_name').value.trim();
-      if(!name) return alert('Please enter hotel name');
-      const h = {
-        id: 'local-' + Date.now(),
-        name,
-        country: document.getElementById('s_country').value.trim(),
-        region: document.getElementById('s_region').value,
-        certifications: document.getElementById('s_cert').value.split(',').map(s=>s.trim()).filter(Boolean),
-        co2_rating: document.getElementById('s_co2').value.trim() || 'Medium',
-        features: (document.getElementById('s_notes').value||'').split(',').map(s=>s.trim()).filter(Boolean),
-        affiliate_url: document.getElementById('s_aff').value.trim() || '#',
-        notes: document.getElementById('s_notes').value.trim(),
-        lat: parseFloat(document.getElementById('s_lat').value) || null,
-        lon: parseFloat(document.getElementById('s_lon').value) || null
-      };
-
-      hotels.push(h);
-      // persist local submissions only (we preserve sampleHotels separately)
-      const localOnly = hotels.filter(x => x.id && x.id.startsWith('local-'));
-      localStorage.setItem('amicus_hotels_v1', JSON.stringify(localOnly));
-      renderResults(hotels);
-      refreshMarkers();
-      alert('Hotel submitted (saved locally). You can Download JSON to export this list.');
-      // clear form
-      ['s_name','s_country','s_cert','s_co2','s_aff','s_notes','s_lat','s_lon'].forEach(id=>{ if(document.getElementById(id)) document.getElementById(id).value=''; });
-    });
-  }
-
-  // download JSON (exports sample + local)
-  const downloadBtn = document.getElementById('downloadJson');
-  if(downloadBtn) {
-    downloadBtn.addEventListener('click', () => {
-      const data = JSON.stringify(hotels, null, 2);
-      const blob = new Blob([data], {type:'application/json'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = 'amicus_hotels_export.json';
-      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-    });
-  }
 
   // refresh markers and dataset on load
   init();
