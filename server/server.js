@@ -67,67 +67,12 @@ const BASIC_US_CITIES = [
   { city: "New Orleans", state: "LA", lat: 29.9511, lon: -90.0715 }
 ];
 
-const BASIC_INTL_HOTELS = [
-  {
-    id: "basic-paris-1",
-    name: "Green Haven Hotel",
-    city: "Paris",
-    country: "France",
-    lat: 48.8566,
-    lon: 2.3522,
-    description: "Eco-chic hotel with bike rental",
-    stars: 4,
-    amenities: ["bike rental", "organic food"],
-    website: "https://www.google.com/maps/search/Green+Haven+Hotel+Paris"
-  },
-  {
-    id: "basic-london-1",
-    name: "River Green Hotel",
-    city: "London",
-    country: "United Kingdom",
-    lat: 51.5074,
-    lon: -0.1278,
-    description: "City hotel with renewable energy features",
-    stars: 4,
-    amenities: ["renewable", "energy", "recycling"],
-    website: "https://www.google.com/maps/search/River+Green+Hotel+London"
-  },
-  {
-    id: "basic-tokyo-1",
-    name: "Green Tokyo Inn",
-    city: "Tokyo",
-    country: "Japan",
-    lat: 35.6762,
-    lon: 139.6503,
-    description: "Modern eco hotel",
-    stars: 4,
-    amenities: ["led lighting", "recycling"],
-    website: "https://www.google.com/maps/search/Green+Tokyo+Inn+Tokyo"
-  },
-  {
-    id: "basic-singapore-1",
-    name: "Earth Hotel Singapore",
-    city: "Singapore",
-    country: "Singapore",
-    lat: 1.3521,
-    lon: 103.8198,
-    description: "Award-winning green building",
-    stars: 5,
-    amenities: ["solar", "ev charging", "organic"],
-    website: "https://www.google.com/maps/search/Earth+Hotel+Singapore"
-  },
-  {
-    id: "basic-dubai-1",
-    name: "Desert Eco Suites",
-    city: "Dubai",
-    country: "United Arab Emirates",
-    lat: 25.2048,
-    lon: 55.2708,
-    description: "Sustainable suites with water conservation",
-    stars: 4,
-    amenities: ["water conservation", "energy"],
-    website: "https://www.google.com/maps/search/Desert+Eco+Suites+Dubai"
-  }
+const BASIC_INTL_CITIES = [
+  { city: "London", country: "United Kingdom", lat: 51.5074, lon: -0.1278 },
+  { city: "Paris", country: "France", lat: 48.8566, lon: 2.3522 },
+  { city: "Tokyo", country: "Japan", lat: 35.6762, lon: 139.6503 },
+  { city: "Singapore", country: "Singapore", lat: 1.3521, lon: 103.8198 },
+  { city: "Dubai", country: "United Arab Emirates", lat: 25.2048, lon: 55.2708 }
 ];
 
 function slugify(value) {
@@ -148,7 +93,7 @@ function buildBasicHotels() {
     { suffix: "Eco Residence", amenities: ["solar", "organic"], stars: 4, latOffset: 0.009, lonOffset: -0.016 }
   ];
 
-  const usHotels = BASIC_US_CITIES.flatMap((city, index) => {
+  const usHotels = BASIC_US_CITIES.flatMap((city) => {
     const citySlug = slugify(city.city);
     return variants.map((variant, variantIndex) => ({
       id: `basic-us-${citySlug}-${variantIndex + 1}`,
@@ -164,7 +109,23 @@ function buildBasicHotels() {
     }));
   });
 
-  return [...usHotels, ...BASIC_INTL_HOTELS];
+  const intlHotels = BASIC_INTL_CITIES.flatMap((city) => {
+    const citySlug = slugify(city.city);
+    return variants.map((variant, variantIndex) => ({
+      id: `basic-intl-${citySlug}-${variantIndex + 1}`,
+      name: `${city.city} ${variant.suffix}`,
+      city: city.city,
+      country: city.country,
+      lat: city.lat + variant.latOffset,
+      lon: city.lon + variant.lonOffset,
+      description: `Sustainable stay in ${city.city}`,
+      stars: variant.stars,
+      amenities: variant.amenities,
+      website: `https://www.google.com/maps/search/${encodeURIComponent(city.city + " " + variant.suffix)}`
+    }));
+  });
+
+  return [...usHotels, ...intlHotels];
 }
 
 const BASIC_HOTELS = buildBasicHotels();
@@ -197,6 +158,81 @@ function basicHotelSearch(city, country) {
   });
 }
 
+function normalizeAmenities(value) {
+  if (Array.isArray(value)) {
+    return value.map(item => String(item).trim()).filter(Boolean);
+  }
+  if (typeof value === "string") {
+    return value.split(/[,;]+|\s{2,}/).map(item => item.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+function deriveSustainabilityMeta(hotel) {
+  const amenitiesList = normalizeAmenities(hotel.amenities);
+  const text = [
+    hotel.name,
+    hotel.description,
+    hotel.notes,
+    hotel.website,
+    amenitiesList.join(" ")
+  ].join(" ").toLowerCase();
+
+  const certifications = [];
+  if (text.includes("leed platinum")) certifications.push("LEED Platinum");
+  if (text.includes("leed gold")) certifications.push("LEED Gold");
+  if (text.includes("leed")) certifications.push("LEED");
+  if (text.includes("earthcheck")) certifications.push("EarthCheck");
+  if (text.includes("green key")) certifications.push("Green Key");
+  if (text.includes("green globe")) certifications.push("Green Globe");
+
+  const hasSolar = text.includes("solar");
+  const hasRenewable = text.includes("renewable") || text.includes("energy");
+  if (hasSolar) certifications.push("Solar Power");
+  if (hasRenewable) certifications.push("Renewable Energy");
+
+  let co2Rating = null;
+  if (text.includes("carbon neutral") || text.includes("net zero")) {
+    co2Rating = "Carbon Neutral";
+  } else if (text.includes("ultra-low") || text.includes("zero carbon")) {
+    co2Rating = "Ultra-Low";
+  } else if (text.includes("low") || text.includes("eco") || text.includes("green") || text.includes("sustainable")) {
+    co2Rating = "Low";
+  }
+
+  return { certifications: Array.from(new Set(certifications)), co2Rating, amenitiesList };
+}
+
+function buildBookingUrl(name, city, country) {
+  const label = name || "hotel";
+  const location = city || country || "";
+  return `https://www.google.com/maps/search/${encodeURIComponent(label)}+${encodeURIComponent(location)}`;
+}
+
+function normalizeHotelRecord(hotel) {
+  const name = (hotel.name || "").trim();
+  if (!name) return null;
+  const { certifications, co2Rating, amenitiesList } = deriveSustainabilityMeta(hotel);
+  const rawStars = parseInt(hotel.stars, 10);
+  const stars = Number.isNaN(rawStars) ? null : Math.min(5, Math.max(1, rawStars));
+  const bookingUrl = hotel.affiliate_url || hotel.booking_url || hotel.website || buildBookingUrl(name, hotel.city, hotel.country);
+
+  return {
+    id: hotel.id,
+    name,
+    city: hotel.city,
+    country: hotel.country,
+    lat: hotel.lat,
+    lon: hotel.lon,
+    description: hotel.description || "",
+    stars,
+    amenities: amenitiesList,
+    certifications,
+    co2_rating: co2Rating,
+    affiliate_url: bookingUrl
+  };
+}
+
 async function withTimeout(promise, timeoutMs) {
   let timeoutId;
   const timeoutPromise = new Promise(resolve => {
@@ -211,30 +247,28 @@ async function withTimeout(promise, timeoutMs) {
 // Free endpoint: OpenStreetMap + Nominatim (no API key needed)
 app.get("/api/hotels/search", async (req, res) => {
   try {
-    const { city = "Rome", country = "" } = req.query;
+    const { city = "Rome", country = "", co2 = "", cert = "", stars = "" } = req.query;
     const timedResult = await withTimeout(searchOpenSourceHotels({ city, country }), 6000);
     let hotels = Array.isArray(timedResult) ? timedResult : [];
-    let source = "OpenStreetMap (Sustainability filter)";
+    const source = "OpenStreetMap (Sustainability filter)";
 
-    if (!hotels || hotels.length === 0) {
-      hotels = basicHotelSearch(city, country);
-      source = "Basic (Local)";
-    } else if (hotels.length < 10) {
-      const fallback = basicHotelSearch(city, country);
-      const merged = [...hotels];
-      const seen = new Set(hotels.map(h => String(h.id)));
-      fallback.forEach(hotel => {
-        const key = String(hotel.id);
-        if (!seen.has(key)) {
-          seen.add(key);
-          merged.push(hotel);
-        }
+    const normalized = hotels
+      .map(normalizeHotelRecord)
+      .filter(Boolean)
+      .filter(hotel => hotel.name && (hotel.co2_rating || (hotel.certifications || []).length > 0 || hotel.stars));
+
+    let filtered = normalized;
+    if (co2 || cert || stars) {
+      const starsValue = parseInt(stars, 10);
+      filtered = normalized.filter(hotel => {
+        const matchesCo2 = co2 ? hotel.co2_rating === co2 : false;
+        const matchesCert = cert ? (hotel.certifications || []).includes(cert) : false;
+        const matchesStars = stars ? (hotel.stars && hotel.stars === starsValue) : false;
+        return matchesCo2 || matchesCert || matchesStars;
       });
-      hotels = merged;
-      source = "OpenStreetMap + Basic (Local)";
     }
 
-    res.json({ success: true, hotels, source });
+    res.json({ success: true, hotels: filtered, source });
   } catch (e) {
     console.error(e);
     res.status(500).json({ success: false, error: e.message });
@@ -274,4 +308,5 @@ app.post("/api/bookings/post-booking", (req, res) => {
   });
 });
 
-app.listen(5000, ()=>console.log("API running on http://localhost:5000"));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));

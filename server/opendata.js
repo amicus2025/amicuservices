@@ -325,15 +325,19 @@ async function queryOverpassAPI(lat, lon, city, country) {
   try {
     console.log('Querying Overpass API...');
     
-    // Smaller bbox for faster responses - 0.3 degree ≈ 33 km
-    const bbox = `${lat-0.3},${lon-0.3},${lat+0.3},${lon+0.3}`;
+    // Wider bbox to return more results - 0.6 degree ≈ 66 km
+    const bbox = `${lat-0.6},${lon-0.6},${lat+0.6},${lon+0.6}`;
     
     // More permissive query - separate the name requirement
     const overpassQuery = `
-      [out:json][timeout:25][bbox:${bbox}];
+      [out:json][timeout:45][bbox:${bbox}];
       (
         node["tourism"="hotel"];
         way["tourism"="hotel"];
+        node["tourism"="motel"];
+        way["tourism"="motel"];
+        node["tourism"="resort"];
+        way["tourism"="resort"];
         node["tourism"="guest_house"];
         way["tourism"="guest_house"];
         node["tourism"="hostel"];
@@ -342,6 +346,8 @@ async function queryOverpassAPI(lat, lon, city, country) {
         way["tourism"="alpine_hut"];
         node["tourism"="apartment"];
         way["tourism"="apartment"];
+        node["tourism"="chalet"];
+        way["tourism"="chalet"];
         node["amenity"="hotel"];
         way["amenity"="hotel"];
       );
@@ -408,7 +414,7 @@ async function queryOverpassAPI(lat, lon, city, country) {
           lat: parseFloat(lat),
           lon: parseFloat(lon),
           description: elem.tags?.description || elem.tags?.['addr:street'] || `Hotel in ${city}`,
-          stars: parseInt(elem.tags?.stars) || 3,
+          stars: elem.tags?.stars ? parseInt(elem.tags?.stars, 10) : null,
           amenities: ['eco-friendly', 'sustainable'],
           leed: true,
           image: 'images/bg_1.jpg',
