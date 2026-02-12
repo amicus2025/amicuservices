@@ -23,7 +23,7 @@
     html,body{height:100%;margin:0;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;}
     .wrap{max-width:var(--max-width);margin:28px auto;padding:18px}
     header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
-    .logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent-600),var(--accent));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:20px}
+    .logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent-600),var(--accent));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:20px;text-decoration:none}
     .brand{font-weight:700;font-size:20px;color:var(--accent)}
     .muted{color:var(--muted);font-size:13px}
     .card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:18px}
@@ -71,7 +71,7 @@
 <body>
   <div class="wrap">
     <header>
-      <div class="logo">LCA</div>
+      <a class="logo" href="index.html" aria-label="Back to homepage">LCA</a>
       <div>
         <div class="brand">Hotel LCA Calculator - Carbon Footprint</div>
         <div class="muted">Estimate CO₂e for small hotels. Export PDF reports with insights.</div>

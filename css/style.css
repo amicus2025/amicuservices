@@ -9020,7 +9020,10 @@ body {
   background-position: center center;
   position: relative;
   color: rgba(255, 255, 255, 0.8);
-  background: #e2c0bb; }
+  background: #e2c0bb;
+  border-radius: 0; }
+.ftco-intro.img {
+  border-radius: 0; }
   .ftco-intro .overlay {
     position: absolute;
     top: 0;
@@ -9029,7 +9032,8 @@ body {
     bottom: 0;
     content: '';
     opacity: .2;
-    background: #000000; }
+    background: #000000;
+    border-radius: 0; }
   @media (max-width: 991.98px) {
     .ftco-intro {
       background-position: center center !important; } }
@@ -9537,10 +9541,13 @@ textarea.form-control {
   width: 100%;
   position: relative;
   z-index: 1;
-  border-radius: 50px; }
+  border-radius: 50px;
+  aspect-ratio: 1 / 1; }
+.ftco-counter .img[style*="about.jpg"] {
+  border-radius: 0; }
   @media (max-width: 991.98px) {
     .ftco-counter .img {
-      height: 350px; } }
+      height: auto; } }
 
 .ftco-counter .text {
   display: inline-block; }
