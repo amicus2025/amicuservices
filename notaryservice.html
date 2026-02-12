@@ -38,6 +38,15 @@
       margin-top: 12px;
     }
     .btn:hover { background: #06b6d4; }
+    .link-button {
+      color: #0ea5a4;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .link-button:hover {
+      color: #06b6d4;
+      text-decoration: none;
+    }
     iframe {
       width: 100%;
       height: 600px;
@@ -50,15 +59,33 @@
       color: #64748b;
       margin-top: 12px;
     }
+    .doc-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .doc-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 14px;
+      color: #0f172a;
+    }
+    .doc-card span {
+      color: #0ea5a4;
+      font-weight: 700;
+      margin-right: 6px;
+    }
+    @media(max-width:800px) { .doc-grid { grid-template-columns: 1fr 1fr; } }
+    @media(max-width:600px) { .doc-grid { grid-template-columns: 1fr; } }
     @media(max-width:600px) { iframe { height: 500px; } }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Schedule Your Notary Online Today!</h1>
-    <p class="note">In Person Electronic Notarizations (IPEN) only available "in person" in CA using California State -approved technology, You will need valid ID and internet camera access.</p>
-    <p class="note">All Notarizations will be "in-person" with ✓ electronic signatures, ✓ electronic seal and ✓ digital certificates.</p>
-
+    <h1>Schedule AmicusDocs Today!</h1>
     <!-- PayPal button -->
     <form id="paypalForm" action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank">
       <input type="hidden" name="cmd" value="_xclick">
@@ -67,13 +94,18 @@
       <input type="hidden" name="amount" value="50.00">
       <input type="hidden" name="currency_code" value="USD">
       <input type="hidden" name="return" value="https://YOURDOMAIN.com/afterpayment.html">
-      <input type="submit" value="Schedule Notary" class="btn">
+      <input type="submit" value="Book Now" class="btn">
     </form>
 
     <!-- RON provider iframe -->
     <iframe id="ronIframe" src="https://www.notarize.com/book?apiKey=YOUR_KEY" title="RON Booking Widget"></iframe>
 
-    <p class="note"><strong>CA Remote Online Notarizations (Available in 2030)</strong></p>
+    <div class="doc-grid">
+      <div class="doc-card"><span>✓</span>Passport applications and renewals</div>
+      <div class="doc-card"><span>✓</span>Visa support documents</div>
+      <div class="doc-card"><span>✓</span>Travel permissions and affidavits</div>
+    </div>
+    <p class="note"><a href="index.html" class="link-button">Back to Home</a></p>
   </div>
 
   <script>
