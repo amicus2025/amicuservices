@@ -35,7 +35,7 @@ AmicuServices is a multi-service platform offering:
 ```
 ├── index.html                          # Main homepage
 ├── amicustravel-landing.html          # Travel services page
-├── amicusnotary-landing.html          # Notary services page
+├── amicusdocs-landing.html            # Notary services page
 ├── amicusservices-landing.html        # Services overview
 ├── sustainable-hotel-search.html       # Hotel search tool
 ├── sustainable-restaurant-search.html  # Restaurant search tool
@@ -95,7 +95,7 @@ Visit the live site at: [https://amicus2025.github.io/amicuservices/](https://am
 - **Home** (`index.html`) - Main landing page with featured destinations
 - **About** (`amicusservices-landing.html`) - Information about AmicuServices
 - **Travel** (`amicustravel-landing.html`) - Travel services and offerings
-- **Notary** (`amicusnotary-landing.html`) - Notary service information
+- **Notary** (`amicusdocs-landing.html`) - Notary service information
 - **Hotels** (`hotel.html`, `sustainable-hotel-search.html`) - Eco-friendly accommodations
 - **Restaurants** (`sustainable-restaurant-search.html`) - Sustainable dining options
 - **Calculator** (`lca-calculator.html`) - Carbon footprint calculator
