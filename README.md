@@ -4,10 +4,12 @@ A comprehensive eco-conscious travel and services platform that helps users disc
 
 ## 🌍 Overview
 
-AmicuServices is a multi-service platform offering:
+# AmicuServices is a multi-service platform offering:
 - **AmicusTravel** - Eco-conscious travel solutions with sustainable destinations
 - **AmicusDocs** - Professional travel document services
+- **AmicusC02** - Carbon footprint reports for hotels and eco-conscious businesses. Track and reduce your environmental impact.
 - **Carbon Calculator** - Calculate and track your carbon footprint
+- **AmicusTransport** - Estimate passenger journey emissions and discover lower-carbon airport transfer options.
 - Sustainable hotel and restaurant search
 - Destination guides for eco-friendly travel
 
