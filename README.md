@@ -1,6 +1,6 @@
 # AmicuServices
 
-A comprehensive eco-conscious suite of travel and business services platform that helps users discover sustainable destinations, accommodations, and businesses while supporting carbon-friendly choices worldwide.
+A comprehensive eco-conscious suite of travel and business services platform that helps users discover sustainable destinations and accommodations, while supporting carbon-friendly choices worldwide.
 
 ## 🌍 Overview
 
