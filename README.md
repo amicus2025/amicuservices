@@ -6,7 +6,7 @@ A comprehensive eco-conscious travel and services platform that helps users disc
 
 AmicuServices is a multi-service platform offering:
 - **AmicusTravel** - Eco-conscious travel solutions with sustainable destinations
-- **AmicusNotary** - Professional notary services
+- **AmicusDocs** - Professional travel document services
 - **Carbon Calculator** - Calculate and track your carbon footprint
 - Sustainable hotel and restaurant search
 - Destination guides for eco-friendly travel
@@ -35,7 +35,7 @@ AmicuServices is a multi-service platform offering:
 ```
 ├── index.html                          # Main homepage
 ├── amicustravel-landing.html          # Travel services page
-├── amicusdocs-landing.html            # Notary services page
+├── amicusdocs-landing.html            # Document services page
 ├── amicusservices-landing.html        # Services overview
 ├── sustainable-hotel-search.html       # Hotel search tool
 ├── sustainable-restaurant-search.html  # Restaurant search tool
@@ -95,7 +95,7 @@ Visit the live site at: [https://amicus2025.github.io/amicuservices/](https://am
 - **Home** (`index.html`) - Main landing page with featured destinations
 - **About** (`amicusservices-landing.html`) - Information about AmicuServices
 - **Travel** (`amicustravel-landing.html`) - Travel services and offerings
-- **Notary** (`amicusdocs-landing.html`) - Notary service information
+- **Documents** (`amicusdocs-landing.html`) - Document process-service information
 - **Hotels** (`hotel.html`, `sustainable-hotel-search.html`) - Eco-friendly accommodations
 - **Restaurants** (`sustainable-restaurant-search.html`) - Sustainable dining options
 - **Calculator** (`lca-calculator.html`) - Carbon footprint calculator
@@ -103,7 +103,7 @@ Visit the live site at: [https://amicus2025.github.io/amicuservices/](https://am
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a Pull Request. 
 
 ## 📄 License
 
