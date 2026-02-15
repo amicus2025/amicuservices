@@ -1,6 +1,6 @@
 # AmicuServices
 
-A comprehensive eco-conscious travel and services platform that helps users discover sustainable destinations, accommodations, and businesses while supporting carbon-friendly choices worldwide.
+A comprehensive eco-conscious suite of travel and business services platform that helps users discover sustainable destinations and accommodations, while supporting carbon-friendly choices worldwide.
 
 ## 🌍 Overview
 
@@ -8,7 +8,8 @@ AmicuServices is a multi-service platform offering:
 - **AmicusTravel** - Eco-conscious travel solutions with sustainable destinations
 - **AmicusDocs** - Professional document authentication and legalization services for international travel and business visas
 - **AmicusC02** - LCA-based carbon footprint reports for hotels and eco-conscious businesses
-- **AmicusTransport** - Airport transfers and low-carbon transport options
+- **AmicusTransport** - Estimate passenger journey emissions and discover lower-carbon airport transfer options
+- **AmicusFitness** - Coming soon (in progress)
 - Sustainable hotel and restaurant search
 - Destination guides for eco-friendly travel
 
@@ -119,7 +120,7 @@ Visit the live site at: [https://amicus2025.github.io/amicuservices/](https://am
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a Pull Request. 
 
 ## 📄 License
 
