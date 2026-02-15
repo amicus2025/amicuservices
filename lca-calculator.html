@@ -67,6 +67,74 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <!-- PayPal SDK -->
   <script src="https://www.paypal.com/sdk/js?client-id=AQsh7wlez6Ba5FTkLYa2mtQDe1y55DPaM6hDh-mnJI3tz5WNYeG_UCfafHct6b2qGl5JpxZ3Jk6_xhKn&currency=USD"></script>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Hotel LCA Calculator - Carbon Footprint</title>
+
+  <!-- Styles: polished & responsive -->
+  <style>
+    :root{
+      --accent: #0ea5a4;
+      --accent-600: #06b6d4;
+      --muted:#64748b;
+      --card:#ffffff;
+      --bg:#f6f9fb;
+      --glass: rgba(255,255,255,0.7);
+      --radius: 12px;
+      --shadow: 0 8px 24px rgba(12,18,31,0.06);
+      --max-width:1100px;
+      --text:#0f172a;
+    }
+    *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;}
+    .wrap{max-width:var(--max-width);margin:28px auto;padding:18px}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    .logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent-600),var(--accent));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:20px;text-decoration:none}
+    .brand{font-weight:700;font-size:20px;color:var(--accent)}
+    .muted{color:var(--muted);font-size:13px}
+    .card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:18px}
+    .grid{display:grid;gap:14px}
+    .cols-2{grid-template-columns:repeat(2, 1fr)}
+    .cols-3{grid-template-columns:repeat(3, 1fr)}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    input[type="number"], select, input[type="text"]{
+      width:100%;padding:10px;border:1px solid #e6edf3;border-radius:10px;font-size:14px;background:#fff;
+    }
+    .row{display:flex;gap:8px}
+    .btn{background:var(--accent);color:white;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
+    .btn.ghost{background:#f1f5f9;color:var(--text);border:1px solid #e6edf3}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .results {display:flex;gap:12px;flex-direction:column}
+    .result-line{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed #f1f5f9}
+    .big{font-size:20px;font-weight:700;color:var(--text)}
+    .small{font-size:13px;color:var(--muted)}
+    pre{background:#fbfdfe;padding:10px;border-radius:8px;overflow:auto}
+    footer{margin-top:18px;font-size:13px;color:var(--muted);text-align:center}
+
+    /* responsive layout */
+    .two-col{display:grid;grid-template-columns:1fr 420px;gap:18px}
+    @media (max-width:1100px){ .two-col{grid-template-columns:1fr 380px} }
+    @media (max-width:900px){ .two-col{grid-template-columns:1fr} .cols-2{grid-template-columns:1fr} .cols-3{grid-template-columns:1fr} }
+    @media (max-width:520px){
+      .logo{width:48px;height:48px;font-size:16px}
+      .brand{font-size:18px}
+      input[type="number"], select, input[type="text"]{padding:9px}
+      .card{padding:14px}
+    }
+
+    /* small helper */
+    .muted-2{color:#475569;font-size:13px}
+    .badge {display:inline-block;padding:6px 10px;border-radius:999px;background:#eef2f2;color:#0f766e;font-weight:600;font-size:13px}
+  </style>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- html2pdf (uses html2canvas + jsPDF) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- PayPal SDK -->
+  <script src="https://www.paypal.com/sdk/js?client-id=AQsh7wlez6Ba5FTkLYa2mtQDe1y55DPaM6hDh-mnJI3tz5WNYeG_UCfafHct6b2qGl5JpxZ3Jk6_xhKn&currency=USD"></script>
 </head>
 <body>
   <div class="wrap">
