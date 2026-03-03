@@ -1,0 +1,35 @@
+# This workflow runs Semgrep on push and pull request events
+name: Semgrep Security Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  semgrep:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Run Semgrep
+        run: semgrep --config .semgrep/config.yaml --error || true
+        # Use --error to fail the workflow on findings, or remove '|| true' to enforce failure
+        # You can also use --config "p/ci" for Semgrep's default security rules
+
+      - name: Upload Semgrep report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-report
+          path: semgrep.log
